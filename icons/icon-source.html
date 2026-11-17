@@ -1,0 +1,62 @@
+<!doctype html>
+<!-- Quelle für das App-Icon von Mathe Legends: die vier Rechenzeichen + − · : als Kärtchen mit Tintenkontur, auf
+     Stunt-Orange mit Rechenkästchen (motivation-spiel, Lernauftrag Abschnitt 4). Zeichen als Formen, nicht als Schrift:
+     So sieht das Icon ohne Netz gleich aus. Rendern: siehe README („Icons neu erzeugen“).
+     ?s=0.6 für die maskable-Variante (Inhalt kleiner, damit Android ihn rund beschneiden darf). -->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; width: 1024px; height: 1024px; overflow: hidden; }
+  body {
+    position: relative;
+    background: radial-gradient(120% 85% at 50% 0%, #D2662A 0%, #B4470C 52%, #8C3507 100%);
+  }
+  /* Rechenkästchen, nach unten ausgeblendet */
+  body::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      repeating-linear-gradient(180deg, transparent 0 80px, rgba(255, 255, 255, .13) 80px 86px),
+      repeating-linear-gradient(90deg, transparent 0 80px, rgba(255, 255, 255, .13) 80px 86px);
+    -webkit-mask-image: linear-gradient(#000 0%, rgba(0, 0, 0, .45) 50%, transparent 85%);
+  }
+  svg { position: absolute; left: 50%; top: 50%; width: 1024px; height: 1024px; margin: -512px 0 0 -512px;
+        transform: scale(var(--s, .92)); z-index: 1; }
+</style>
+</head>
+<body>
+  <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+    <g id="k" stroke-linejoin="round">
+      <!-- vier Kärtchen mit hartem Tintenschatten -->
+      <g transform="translate(150 140)">
+        <rect x="0" y="30" width="340" height="340" rx="72" fill="#2B1408"/>
+        <rect x="0" y="0" width="340" height="340" rx="72" fill="#FFFFFF" stroke="#2B1408" stroke-width="28"/>
+        <rect x="80" y="148" width="180" height="44" rx="22" fill="#2B1408"/>
+        <rect x="148" y="80" width="44" height="180" rx="22" fill="#2B1408"/>
+      </g>
+      <g transform="translate(534 140)">
+        <rect x="0" y="30" width="340" height="340" rx="72" fill="#2B1408"/>
+        <rect x="0" y="0" width="340" height="340" rx="72" fill="#FFCC2E" stroke="#2B1408" stroke-width="28"/>
+        <rect x="80" y="148" width="180" height="44" rx="22" fill="#2B1408"/>
+      </g>
+      <g transform="translate(150 524)">
+        <rect x="0" y="30" width="340" height="340" rx="72" fill="#2B1408"/>
+        <rect x="0" y="0" width="340" height="340" rx="72" fill="#B6F23A" stroke="#2B1408" stroke-width="28"/>
+        <circle cx="170" cy="170" r="36" fill="#2B1408"/>
+      </g>
+      <g transform="translate(534 524)">
+        <rect x="0" y="30" width="340" height="340" rx="72" fill="#2B1408"/>
+        <rect x="0" y="0" width="340" height="340" rx="72" fill="#FFFFFF" stroke="#2B1408" stroke-width="28"/>
+        <circle cx="170" cy="108" r="34" fill="#2B1408"/>
+        <circle cx="170" cy="232" r="34" fill="#2B1408"/>
+      </g>
+    </g>
+  </svg>
+  <script>
+    const s = new URLSearchParams(location.search).get('s');
+    if (s) document.querySelector('svg').style.setProperty('--s', s);
+  </script>
+</body>
+</html>

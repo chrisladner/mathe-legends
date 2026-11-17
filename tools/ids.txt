@@ -1,0 +1,116 @@
+# Mathe Legends – Register der Schlüssel zum Fortschritt
+# Typ-ids (S.f[id]) und Fehlerarten (S.f[id].fa) stehen im gespeicherten Fortschritt auf dem iPhone.
+# Nie ändern, nie wiederverwenden, nie löschen – auch nicht, wenn ein Typ wegfällt (dann Zeile mit „entfernt am …“).
+# tools/aufgaben-pruefen.mjs prüft: jede id und jede Fehlerart aus aufgaben.js steht hier; reserviert/platzhalter ist kein Typ.
+#
+# Art        Schlüssel          seit        Bedeutung
+# ---------- ------------------ ----------- ------------------------------------------------------------------------------
+
+# Typen (Reihenfolge wie auf dem Zettel; Kern und Extra legt schularbeit.js fest)
+typ          zs-ablesen         2026-11-16  Zahlenstrahl ablesen (Kern)
+typ          zs-markieren       2026-11-16  Zahlen am Zahlenstrahl markieren (Extra)
+typ          vo-zeichen         2026-11-16  Vergleichen < > = im Dreierpack (Kern)
+typ          vo-vzn             2026-11-16  Vorgänger, Zahl, Nachfolger (Kern)
+typ          vo-ordnen          2026-11-16  Ordnen auf- und absteigend (Kern; ein Typ mit zwei Richtungen)
+typ          vo-gerade          2026-11-16  gerade und ungerade Zahlen dazwischen (Extra)
+typ          sw-zahlwort        2026-11-16  Zahlwort in Ziffern (Kern)
+typ          sw-tafel           2026-11-16  Stellenwerttafel, beide Richtungen (Kern)
+typ          sw-als-zahl        2026-11-16  Stellenwerte als Zahl bis Milliarden (Kern)
+typ          sw-ziffer          2026-11-16  Ziffer und Stellenwert (Extra)
+typ          sw-null            2026-11-16  Verzehnfachen (Extra)
+typ          rs-runden          2026-11-16  Runden auf Z, H, T, ZT (Kern)
+typ          rs-ueberschlag     2026-11-16  Überschlag wie im Heft (Kern)
+typ          add-kette          2026-11-16  Rechenkette plus (Kern)
+typ          add-schriftlich    2026-11-16  schriftlich addieren (Kern, Papier)
+typ          sub-kette          2026-11-16  Rechenkette minus (Kern)
+typ          sub-schriftlich    2026-11-16  schriftlich subtrahieren, Variante sub-zwei (Kern, Papier)
+typ          sub-begriffe       2026-11-16  Fachbegriffe und Umkehraufgabe, Variante add-begriffe (Kern)
+typ          ta-rechnung        2026-11-16  Textaufgabe: Rechnung und Ergebnis (Kern)
+typ          ta-ganz            2026-11-16  Textaufgabe mit a) und b) (Kern, Papier)
+typ          mul-kopf-stufe     2026-11-16  mal 10, 100, 1 000 (Kern)
+typ          mul-kopf-nullen    2026-11-16  mal mit Nullen (Kern)
+typ          mul-kopf-drei      2026-11-16  drei Faktoren (Kern)
+typ          mul-kopf-klammer   2026-11-16  Faktor mal Klammer (Kern)
+typ          mul-schriftlich    2026-11-16  schriftlich multiplizieren, Variante mul-einser (Kern, Papier)
+typ          div-kopf           2026-11-16  dividieren im Kopf, mit 0 und 1 (Kern)
+typ          div-schriftlich-1  2026-11-16  schriftlich dividieren, Divisor 2–9 (Kern, Papier)
+typ          div-schriftlich-2  2026-11-16  schriftlich dividieren, Divisor 11–25 (Kern, Papier)
+typ          vb-regeln          2026-11-16  Klampunstri (Kern)
+typ          vb-term            2026-11-16  Rechnung aus Worten (Kern)
+
+# Reserviert: Namen aus Lernauftrag 2a, die als Variante in einem Typ stecken. Nie als Typ-id vergeben.
+reserviert   vo-ordnen-auf      2026-11-16  Variante von vo-ordnen
+reserviert   vo-ordnen-ab       2026-11-16  Variante von vo-ordnen
+reserviert   sub-zwei           2026-11-16  Variante von sub-schriftlich
+reserviert   add-begriffe       2026-11-16  Variante von sub-begriffe
+reserviert   mul-einser         2026-11-16  Variante von mul-schriftlich
+reserviert   mul-kopf           2026-11-16  Sammelname der vier mul-kopf-Typen in 2a
+reserviert   zs-einheit         2026-11-16  nur Papier (Lineal), kein App-Typ
+reserviert   sub-pyramide       2026-11-16  nur Papier (App frühestens v2)
+reserviert   mul-sach           2026-11-16  Vorrat von ta-ganz
+reserviert   div-sach           2026-11-16  Vorrat von ta-ganz
+
+# Platzhalter aus dem Gerüst: nur bis schularbeit.js die echten ids nutzt, nie in einer veröffentlichten Version
+platzhalter  dummy-plus         2026-11-16
+platzhalter  dummy-vgl          2026-11-16
+platzhalter  dummy-div          2026-11-16
+platzhalter  dummy-vzn          2026-11-16
+platzhalter  dummy-kuerzel      2026-11-16
+platzhalter  dummy-gerade       2026-11-16
+platzhalter  dummy-term         2026-11-16
+
+# Fehlerarten (MATHE.fehlerarten; Rückmeldetext steht in aufgaben.js)
+fehlerart    schritt            2026-11-16  Zahlenstrahl: falscher Schritt
+fehlerart    striche            2026-11-16  Zahlenstrahl: ein Strich daneben
+fehlerart    mitte              2026-11-16  Zahlenstrahl: Mitte zwischen zwei Strichen
+fehlerart    zeichen            2026-11-16  Vergleich: Zeichen verkehrt
+fehlerart    genau              2026-11-16  Vergleich: = statt < > oder umgekehrt
+fehlerart    stellen            2026-11-16  Ordnen nach Ziffern statt nach Stellen
+fehlerart    richtung           2026-11-16  Ordnen: falsche Richtung
+fehlerart    ueberNull          2026-11-16  eins zurück über die Null (3 400 → 3 399)
+fehlerart    ueberNeun          2026-11-16  eins weiter über die Neun (2 699 → 2 700)
+fehlerart    vertauscht         2026-11-16  Vorgänger und Nachfolger vertauscht
+fehlerart    grenzen            2026-11-16  Grenzen mitgezählt
+fehlerart    gerade             2026-11-16  gerade und ungerade verwechselt
+fehlerart    einerZehner        2026-11-16  Zahlwort: Einer und Zehner verdreht
+fehlerart    nullen             2026-11-16  Stellenwert: Null fehlt oder zu viel
+fehlerart    stelle             2026-11-16  Stellenwert: eine Stelle daneben
+fehlerart    abgerundet         2026-11-16  abgerundet statt aufgerundet
+fehlerart    aufgerundet        2026-11-16  aufgerundet statt abgerundet
+fehlerart    neunKippt          2026-11-16  Aufrunden über die 9 ohne Übertrag
+fehlerart    falscheStelle      2026-11-16  auf die falsche Stelle gerundet
+fehlerart    ueGenau            2026-11-16  Überschlag: genau gerechnet
+fehlerart    ueErstRunden       2026-11-16  Überschlag: erst gerechnet, dann gerundet
+fehlerart    ueUnter100         2026-11-16  Überschlag: Zahl unter 100 auf Hunderter gerundet
+fehlerart    ueStelle           2026-11-16  Überschlag: auf die falsche Stelle gerundet
+fehlerart    uebertrag          2026-11-16  Übertrag vergessen
+fehlerart    zehner             2026-11-16  Zehner daneben (Kopfrechnen)
+fehlerart    obenUnten          2026-11-16  kleinere von der größeren Ziffer statt ergänzen
+fehlerart    verrutscht         2026-11-16  Stellen verrutscht (nicht stellengerecht)
+fehlerart    vergessen          2026-11-16  eine Zahl der Rechnung vergessen
+fehlerart    umkehr             2026-11-16  Umkehraufgabe mit Fachbegriffen falsch
+fehlerart    begriffe           2026-11-16  Fachbegriff verwechselt
+fehlerart    umMehr             2026-11-16  „um … größer“ nur halb gerechnet
+fehlerart    rechenart          2026-11-16  Rechenart verwechselt
+fehlerart    umgedreht          2026-11-16  bei − oder : die Zahlen vertauscht (b − a, b : a)
+fehlerart    signalwort         2026-11-16  Textaufgabe: Falle – nach dem Signalwort gerechnet (wort, irreArt)
+fehlerart    rechenfehler       2026-11-16  Rechnung richtig, nur das Ergebnis falsch
+fehlerart    zahlen             2026-11-16  andere Zahlen als im Text
+fehlerart    klammer            2026-11-16  Klammer fehlt oder nicht zuerst gerechnet
+fehlerart    vonVerdreht        2026-11-16  „subtrahiere von“ verdreht
+fehlerart    punktVorStrich     2026-11-16  von links statt Punkt vor Strich
+fehlerart    zweiSchritte       2026-11-16  Textaufgabe: Zwischenergebnis nicht verwendet
+fehlerart    nullenMal          2026-11-16  mal: Nullen falsch gezählt
+fehlerart    extraNull          2026-11-16  mal: Null aus 5 · 4 = 20 vergessen
+fehlerart    faktor             2026-11-16  einen Faktor vergessen
+fehlerart    zeileVerrutscht    2026-11-16  schriftlich mal: Zeile nicht eine Stelle weiter
+fehlerart    nullQuotient       2026-11-16  Null im Quotienten vergessen
+fehlerart    restVergessen      2026-11-16  Rest vergessen
+fehlerart    restZuGross        2026-11-16  Rest größer als der Divisor
+fehlerart    durchNull          2026-11-16  durch 0 gerechnet statt „nicht möglich“
+fehlerart    nullDurch          2026-11-16  0 : n für unmöglich gehalten
+fehlerart    nullenStreichen    2026-11-16  Nullen falsch gestrichen
+fehlerart    pruefen            2026-11-16  allgemein: Überschlag oder Probe machen
+
+# Verworfen vor der ersten Installation (nie gespeichert, trotzdem nicht neu vergeben)
+verworfen    reihenfolge        2026-11-16  ersetzt durch umgedreht (Projektleitung 16.11.)

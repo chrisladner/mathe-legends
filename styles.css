@@ -1,0 +1,602 @@
+/* Mathe Legends – Sammel-Look der Legends-Familie: dicke Tinten-Konturen, Lilita One, Stufenfarben.
+   Feld: Stunt-Orange #B4470C (motivation-spiel, Lernauftrag Abschnitt 4: Weiß darauf 5,5 : 1; Gold, Sonne und
+   Notfall-Orange nur auf hellen Flächen), Hintergrund Rechenkästchen. Grundlage: styles.css von Spell Legends (dl-v8). */
+:root {
+  /* Feldfarbe – beim Ändern auch theme-color in index.html, manifest.webmanifest und icons/icon-source.html */
+  --field: #B4470C;
+  --field-hi: #C95A1C;
+  --field-lo: #8C3507;
+  --ink: #2B1408;
+  --mist: #FFF1E6;
+  --muted: #7A5646;
+  --lime: #B6F23A;
+  --sun: #FFCC2E;
+  --coral: #FF5168;    /* nur „Fortschritt löschen“ – nie in der Runde */
+  --orange: #FF9A2B;   /* Notfallplan – nie Rot, nur auf Weiß */
+
+  /* Stufen: neu, ⅓, ⅔ (Lime), sicher (Gold) */
+  --t0: #F2DCCB;
+  --t1: #B6F23A;
+  --t3: #FFD23F;
+  --holo: linear-gradient(115deg, #FFD23F 0%, #FFF3A6 20%, #FF93DC 42%, #86ECFF 64%, #FFD23F 86%, #FFF3A6 100%);
+
+  --display: 'Lilita One', ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif;
+  --body: ui-rounded, 'SF Pro Rounded', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --st: env(safe-area-inset-top, 0px);
+  --sb: env(safe-area-inset-bottom, 0px);
+  --r: 22px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { height: 100%; -webkit-text-size-adjust: 100%; background: var(--field); }
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--field);
+  color: #fff;
+  font: 600 16px/1.4 var(--body);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+/* Spielfeld: Licht von oben, dazu Rechenkästchen, die nach unten ausblenden */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(130% 55% at 50% -8%, rgba(255, 255, 255, .20), transparent 62%),
+    linear-gradient(180deg, var(--field-hi) 0%, var(--field) 42%, var(--field-lo) 100%);
+}
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 24px, rgba(255, 255, 255, .09) 24px 26px),
+    repeating-linear-gradient(90deg, transparent 0 24px, rgba(255, 255, 255, .09) 24px 26px);
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .45) 40%, transparent 72%);
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, .45) 40%, transparent 72%);
+}
+body.in-session { overflow: hidden; }
+#app { position: relative; z-index: 1; }
+button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+:focus-visible { outline: 3px solid var(--sun); outline-offset: 3px; }
+
+.screen {
+  max-width: 520px;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: calc(var(--st) + 14px) 16px calc(var(--sb) + 24px);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- Typo ---------- */
+.outline {
+  font-family: var(--display);
+  font-weight: 400;
+  color: #fff;
+  letter-spacing: .01em;
+  text-shadow:
+    2px 2px 0 var(--ink), -2px 2px 0 var(--ink), 2px -2px 0 var(--ink), -2px -2px 0 var(--ink),
+    0 2px 0 var(--ink), 0 -2px 0 var(--ink), 2px 0 0 var(--ink), -2px 0 0 var(--ink),
+    0 5px 0 var(--ink);
+}
+.hero { font-size: clamp(36px, 11vw, 52px); line-height: 1; margin: 0; }
+.center { text-align: center; }
+.eyebrow { font: 800 12px/1.1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.lead { font: 700 18px/1.4 var(--body); margin: 0; }
+.fineprint { font: 600 13.5px/1.4 var(--body); color: var(--muted); margin: 0; }
+.screen > .fineprint { color: rgba(255, 255, 255, .85); }
+
+/* ---------- Knöpfe ---------- */
+.btn {
+  appearance: none;
+  -webkit-appearance: none;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: #fff;
+  color: var(--ink);
+  font: 400 20px/1.05 var(--display);
+  letter-spacing: .03em;
+  padding: 15px 16px 13px;
+  min-height: 52px;
+  box-shadow: 0 5px 0 var(--ink);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: transform .07s ease, box-shadow .07s ease, background-color .15s;
+}
+.btn:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--ink); }
+.btn.go { background: var(--lime); }
+.btn.danger { background: var(--coral); }
+.btn.big { display: block; width: 100%; font-size: 25px; padding: 17px 16px 15px; border-radius: 20px; }
+.btn.neben { text-align: left; font: 700 15.5px/1.35 var(--body); letter-spacing: 0; padding: 12px 14px 11px; }
+.btn.neben b { font: 400 18px/1 var(--display); letter-spacing: .02em; }
+.btn:disabled { opacity: .5; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.two:has(> :only-child) { grid-template-columns: 1fr; }
+.two:empty { display: none; }
+
+.icon-btn {
+  flex: 0 0 auto;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 14px;
+  border: 3px solid var(--ink);
+  background: #fff;
+  color: var(--ink);
+  font: 400 24px/1 var(--display);
+  box-shadow: 0 4px 0 var(--ink);
+  cursor: pointer;
+}
+.icon-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.link {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  font: 700 14px/1.3 var(--body);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  opacity: .85;
+  cursor: pointer;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: #fff;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: var(--r);
+  box-shadow: 0 7px 0 var(--ink);
+  padding: 18px;
+}
+.panel p { margin: 0; }
+
+/* Stufe als drei Kästchen: ⅓ und ⅔ in Lime, sicher alle drei in Gold (Form und Farbe zeigen dasselbe) */
+.stufe { display: inline-flex; gap: 3px; vertical-align: middle; }
+.stufe i { display: block; width: 12px; height: 12px; border: 2px solid var(--ink); border-radius: 3px; background: #fff; }
+.stufe.s1 i:nth-child(1), .stufe.s2 i:nth-child(-n+2) { background: var(--t1); }
+.stufe.s3 i { background: var(--t3); }
+
+/* ---------- Willkommen ---------- */
+.welcome { justify-content: center; text-align: center; gap: 18px; }
+.logo-ops { display: grid; grid-template-columns: repeat(2, 64px); gap: 10px; justify-content: center; margin-top: 6px; }
+.logo-ops b {
+  display: grid; place-items: center; height: 64px; border: 3px solid var(--ink); border-radius: 16px; background: #fff;
+  color: var(--ink); font: 400 40px/1 var(--display); box-shadow: 0 5px 0 var(--ink);
+}
+.logo-ops b:nth-child(2) { background: var(--sun); }
+.logo-ops b:nth-child(3) { background: var(--lime); }
+.logo-ops b:nth-child(4) { background: var(--t3); }
+.rules { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; text-align: left; }
+.rules li {
+  display: grid; grid-template-columns: 34px 1fr; gap: 8px; align-items: start;
+  background: rgba(43, 20, 8, .38); border: 2.5px solid var(--ink); border-radius: 16px; padding: 11px 12px;
+}
+.rules li span { font-size: 22px; line-height: 1.25; text-align: center; }
+.rules li p { margin: 0; font: 600 15px/1.4 var(--body); }
+.name-form { display: grid; gap: 12px; text-align: left; }
+.name-form label { font: 400 22px/1 var(--display); }
+
+input[type=text], input[type=date] {
+  width: 100%; min-height: 52px; font: 700 20px/1.2 var(--body); color: var(--ink); background: #fff;
+  border: 3px solid var(--ink); border-radius: 14px; padding: 11px 14px; outline: none; -webkit-appearance: none; appearance: none;
+}
+input[type=text]:focus, input[type=date]:focus { box-shadow: 0 0 0 4px var(--sun); }
+input::placeholder { color: #B49686; opacity: 1; }
+
+/* ---------- Start ---------- */
+.home-top, .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.topbar { justify-content: flex-start; }
+.topbar h1 { margin: 0; font-size: 30px; line-height: 1.05; overflow-wrap: anywhere; }
+.hello { margin: 0; font-size: clamp(34px, 10.5vw, 44px); line-height: 1; overflow-wrap: anywhere; }
+
+/* Ziel-Karte: Countdown, große Zahl „geschafft“, Stempel, Mission */
+.ziel { display: grid; gap: 12px; }
+.ziel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ziel-txt { min-width: 0; }
+.ziel-titel { margin: 5px 0 0; font: 400 21px/1.1 var(--display); overflow-wrap: anywhere; }
+.countdown {
+  flex: 0 0 auto; width: 64px; height: 64px; border-radius: 50%; display: grid; place-content: center; text-align: center;
+  background: var(--sun); border: 3px solid var(--ink); box-shadow: 0 4px 0 var(--ink);
+}
+.countdown b { font: 400 28px/.9 var(--display); }
+.countdown span { font: 800 11px/1 var(--body); letter-spacing: .04em; }
+.ziel-zahlrow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ziel-zahl { display: flex; align-items: baseline; gap: 2px; }
+.ziel-zahl b { font: 400 58px/.9 var(--display); }
+.ziel-zahl span { font: 400 26px/1 var(--display); }
+.ziel-zahltxt { display: grid; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.ziel-zahltxt b { font: 400 21px/1 var(--display); }
+.ziel-zahltxt small { font: 800 13px/1.2 var(--body); color: var(--muted); }
+.stempel {
+  display: inline-block; padding: 7px 11px 5px; border: 3px solid var(--ink); border-radius: 12px; box-shadow: 0 4px 0 var(--ink);
+  font: 400 19px/1 var(--display); letter-spacing: .04em; white-space: nowrap; transform: rotate(-6deg); color: var(--ink);
+  animation: stamp .5s cubic-bezier(.3, 1.6, .5, 1) both;
+}
+.stempel.bereit { background: var(--t3); }
+.stempel.fast { background: var(--sun); }
+.stempel.perfekt { background: var(--holo); background-size: 250% 100%; animation: stamp .5s cubic-bezier(.3, 1.6, .5, 1) both, holo 4s linear infinite; }
+.ziel-sub { font: 700 15px/1.35 var(--body); color: var(--ink); }
+.mission-line { font: 700 16px/1.4 var(--body); text-align: center; }
+.mission-done { font: 400 28px/1.1 var(--display); text-align: center; margin: 4px 0 0 !important; }
+
+/* Deine Mission heute: ① Runde und ② Papier als antippbare Zeilen, offen ○ (nie ✕ oder Rot), erledigt ✓ in Lime */
+.mission { display: grid; gap: 10px; background: var(--mist); border: 2.5px solid var(--ink); border-radius: 18px; padding: 12px; }
+.mission .eyebrow { color: var(--ink); }
+.mission > .fineprint { text-align: center; }
+.mission.fertig { background: #F3FFE0; }
+.mission.fertig .mission-done { margin: 0 !important; }
+.mzeilen { display: grid; gap: 8px; }
+.mzeile {
+  appearance: none; display: grid; grid-template-columns: 30px minmax(0, 1fr); align-items: center; gap: 10px; width: 100%;
+  min-height: 52px; text-align: left; padding: 9px 12px; background: #fff; color: var(--ink);
+  border: 2.5px solid var(--ink); border-radius: 14px; box-shadow: 0 3px 0 var(--ink); font: 700 15px/1.35 var(--body); cursor: pointer;
+}
+button.mzeile:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.mzeile b { font: 400 18px/1.1 var(--display); }
+.mhaken {
+  width: 30px; height: 30px; border: 3px solid var(--ink); border-radius: 50%; display: grid; place-items: center;
+  background: #fff; font: 400 17px/1 var(--display); color: transparent;
+}
+.mzeile.ok { background: #F3FFE0; box-shadow: none; cursor: default; }
+.mzeile.ok .mhaken { background: var(--lime); color: var(--ink); }
+
+/* Deine 10 Themen: je ein Balken, karierte Ziellinie, darunter Lime, darüber Gold mit Stern */
+.themen { display: grid; gap: 10px; }
+.themen-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.themen-sterne { font: 400 18px/1 var(--display); }
+.trows { display: grid; gap: 8px; }
+.trow {
+  appearance: none; display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'label rest' 'bar bar';
+  align-items: center; gap: 6px 10px; width: 100%; text-align: left; background: #fff; color: var(--ink);
+  border: 2.5px solid var(--ink); border-radius: 14px; padding: 9px 12px 10px; box-shadow: 0 3px 0 var(--ink); cursor: pointer;
+}
+button.trow:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+div.trow { cursor: default; box-shadow: none; }
+.trow.papier-only { grid-template-areas: 'label rest'; background: var(--mist); }
+.zlabel { grid-area: label; font: 800 15px/1.2 var(--body); overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+.zbar {
+  grid-area: bar; position: relative; height: 16px; border: 2.5px solid var(--ink); border-radius: 999px;
+  background: repeating-linear-gradient(-45deg, #fff 0 4px, var(--mist) 4px 8px);
+}
+.zbar i {
+  position: absolute; left: 0; top: 0; bottom: 0; display: block; background: var(--lime); border-radius: 999px;
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, .45); transition: width .9s cubic-bezier(.3, 1.1, .5, 1);
+}
+.trow.over .zbar i { background: var(--t3); }
+.zlinie {
+  position: absolute; top: -5px; bottom: -5px; width: 6px; margin-left: -3px; z-index: 1;
+  background: repeating-conic-gradient(var(--ink) 0 25%, #fff 0 50%) 0 0 / 6px 6px;
+  border: 1.5px solid var(--ink); border-radius: 2px;
+}
+.zrest { grid-area: rest; font: 800 12.5px/1 var(--body); color: var(--muted); white-space: nowrap; text-align: right; }
+.zrest.ok { color: var(--ink); }
+.tliste { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.tzeile { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+.tzeile span { display: grid; gap: 2px; }
+.tzeile small { font: 700 13px/1.2 var(--body); color: var(--muted); }
+
+/* Plan-Karte: Stempel in der Stufenfarbe (Im Plan Lime, Aufholen Sonne, Notfallplan Orange – nie Rot; ohne Termin grau) */
+.plan { display: grid; gap: 10px; }
+.plan.wait { min-height: 176px; opacity: .35; }
+.plan-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.plan-stamp {
+  display: inline-block; padding: 7px 13px 5px; border: 3px solid var(--ink); border-radius: 14px;
+  background: var(--lime); box-shadow: 0 4px 0 var(--ink); transform: rotate(-2deg);
+  font: 400 21px/1 var(--display); letter-spacing: .02em; white-space: nowrap;
+}
+.plan.catch .plan-stamp { background: var(--sun); }
+.plan.sos .plan-stamp { background: var(--orange); }
+.plan.neutral .plan-stamp { background: var(--mist); color: var(--muted); border-color: var(--muted); box-shadow: 0 4px 0 var(--muted); }
+.plan-text { font: 700 16px/1.4 var(--body); }
+.plan-days { list-style: none; margin: 2px 0 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.pday { display: grid; justify-items: center; gap: 5px; }
+.pday i { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border: 3px solid var(--ink); border-radius: 50%; background: #fff; }
+.pday span { font: 800 11.5px/1 var(--body); color: var(--muted); }
+.pday.today span { color: var(--ink); }
+.pday.fertig i { background: var(--lime); }
+.pday.fertig i::after { content: '✓'; font: 400 15px/1 var(--display); color: var(--ink); }
+.pday.teil i { background: linear-gradient(90deg, var(--lime) 50%, #fff 50%); }
+.pday.aus i { border-style: dashed; }
+.pday.frei i { background: var(--mist); border-color: #D7BBA9; }
+.pday.offen i { box-shadow: 0 0 0 3px var(--sun); }
+
+.install { background: var(--sun); display: grid; gap: 6px; box-shadow: 0 5px 0 var(--ink); }
+.install p { font-weight: 700; }
+.install .link { justify-self: start; }
+.share { display: inline-grid; place-items: center; width: 22px; height: 22px; border: 2px solid var(--ink); border-radius: 6px; font-size: 12px; vertical-align: -3px; }
+
+/* ---------- Runde ---------- */
+/* Keine iPhone-Tastatur: Die Runde ist so hoch wie der Bildschirm, unten das eigene Ziffernfeld (Daumen) */
+.session {
+  max-width: 520px;
+  height: 100vh;
+  height: 100dvh;
+  margin: 0 auto;
+  padding: calc(var(--st) + 10px) 16px calc(var(--sb) + 12px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+}
+.ses-top { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; }
+.bar { flex: 1; height: 24px; background: rgba(43, 20, 8, .55); border: 3px solid var(--ink); border-radius: 999px; overflow: hidden; }
+.bar i {
+  display: block; height: 100%; width: 0; background: var(--lime); border-radius: 999px;
+  box-shadow: inset 0 5px 0 rgba(255, 255, 255, .45); transition: width .45s cubic-bezier(.3, 1.3, .5, 1);
+}
+/* Zielstand oben rechts – springt, wenn etwas sicher wird */
+.ses-ziel {
+  flex: 0 0 auto; min-width: 62px; padding: 7px 9px 5px; text-align: center; border: 3px solid var(--ink); border-radius: 12px;
+  background: var(--sun); color: var(--ink); box-shadow: 0 3px 0 var(--ink); font: 400 18px/1 var(--display);
+}
+.ses-cardwrap { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-bottom: 9px; -webkit-overflow-scrolling: touch; }
+#ses-next { flex: 0 0 auto; }
+
+.vcard {
+  position: relative; background: #fff; color: var(--ink); border: 3px solid var(--ink); border-radius: 24px;
+  box-shadow: 0 8px 0 var(--ink); overflow: hidden;
+}
+/* Band oben: neutral – kein Thema, keine Themenfarbe vor der Antwort (Lernmodell Teil A). Nie Rot. */
+.band {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px; min-height: 40px;
+  background: var(--t0); border-bottom: 3px solid var(--ink); padding: 6px 10px 5px 15px;
+  font: 400 16px/1.1 var(--display); letter-spacing: .03em; color: var(--ink);
+}
+.band.good { background: var(--lime); }
+.band.sogehts { background: var(--sun); }
+.band.practice { background: var(--mist); }
+.band.rule { background: #8FD0FF; }
+.tool {
+  appearance: none; border: 2.5px solid var(--ink); background: #fff; color: var(--ink); border-radius: 999px; flex: 0 0 auto;
+  padding: 8px 12px 7px; font: 800 13.5px/1 var(--body); box-shadow: 0 3px 0 var(--ink); cursor: pointer; white-space: nowrap;
+}
+.tool:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.cbody { padding: 14px 18px 18px; display: flex; flex-direction: column; gap: 10px; }
+.atext { margin: 0; font: 800 17px/1.35 var(--body); }
+.atext.lang { font-size: 15px; line-height: 1.3; }
+.q { margin: 0; font: 400 clamp(32px, 10vw, 44px)/1.1 var(--display); font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+/* Zahlwort als Aufgabe: Umbruch nur nach hundert, tausend, Million (<wbr> aus app.js), darum kleiner – jedes Stück passt
+   bei 375 px in die Zeile; break-word bricht nur, wenn ein Stück doch nicht passt (Prüfung Runde 1, M3) */
+.q.wort { font-size: clamp(22px, 7vw, 30px); line-height: 1.2; }
+.hilfe, .tipp-zeile { margin: 0; background: #FFF4CC; border-radius: 12px; padding: 9px 12px; font: 700 15px/1.35 var(--body); }
+.anz-zeile { display: flex; justify-content: center; }
+.anz {
+  display: block; min-width: 62%; min-height: 60px; padding: 9px 16px 7px; border: 3px solid var(--ink); border-radius: 16px;
+  background: var(--mist); color: var(--ink); text-align: center; white-space: nowrap;
+  font: 400 34px/1.2 var(--display); font-variant-numeric: tabular-nums;
+}
+.anz .leer { color: #D0AE9A; }
+.anz .akt { box-shadow: inset 0 -5px 0 var(--sun); padding: 0 2px; }
+.anz .rr { color: var(--muted); }
+.anz .nm { font-size: 24px; }
+.typname { margin: 0; font: 800 13px/1.2 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.answer-line { margin: 0; font: 700 18px/1.35 var(--body); }
+.loesung { font: 400 26px/1.2 var(--display); font-variant-numeric: tabular-nums; }
+.loesung mark { background: var(--sun); color: var(--ink); border-radius: 4px; padding: 0 2px; }
+.weg { margin: 0; padding-left: 22px; display: grid; gap: 4px; font: 700 15.5px/1.4 var(--body); font-variant-numeric: tabular-nums; }
+.note { margin: 0; font: 700 15.5px/1.4 var(--body); }
+.note.hinweis { border-left: 4px solid var(--sun); padding-left: 10px; }   /* Fehlerart: die Strategie zuerst */
+.sched { margin: 0; font: 800 14px/1.35 var(--body); color: var(--muted); }
+.sched.up { color: #2B7F0E; }
+.kann { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font: 700 15.5px/1.3 var(--body); }
+.kann.richtig li { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.kann.richtig small { font: 800 12.5px/1.2 var(--body); color: var(--muted); }
+.kann.richtig .loesung { font-size: 22px; }
+
+/* Dreierpack < > =: oben die Rechnung, darunter drei große Knöpfe */
+.vgl { display: grid; gap: 12px; }
+.vgl-zeile { display: grid; gap: 6px; padding-bottom: 10px; border-bottom: 2px dashed var(--t0); }
+.vgl-zeile:last-child { border-bottom: 0; padding-bottom: 0; }
+.vgl-term { display: flex; justify-content: center; align-items: center; gap: 10px; font: 400 24px/1.1 var(--display); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.vgl-k { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.vk {
+  appearance: none; min-height: 48px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; color: var(--ink);
+  font: 400 26px/1 var(--display); box-shadow: 0 3px 0 var(--ink); cursor: pointer; user-select: none; -webkit-user-select: none;
+}
+.vk:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.vk.an { background: var(--sun); }
+.vgl-erg { display: inline-grid; place-items: center; min-width: 40px; height: 40px; border: 3px solid var(--ink); border-radius: 10px; background: var(--lime); }
+.vgl-erg.vgl-slot { background: var(--mist); }
+.vgl-zeile.bad .vgl-erg { background: var(--sun); }
+
+/* Ziffernfeld: Tasten mindestens 56 pt, kein Doppeltipp-Zoom, kein Markieren */
+.pad { flex: 0 0 auto; display: grid; gap: 8px; }
+.tasten { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.key {
+  appearance: none; min-height: 56px; border: 3px solid var(--ink); border-radius: 16px; background: #fff; color: var(--ink);
+  font: 400 28px/1 var(--display); box-shadow: 0 4px 0 var(--ink); cursor: pointer;
+  touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+}
+.key:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.key.go { background: var(--lime); font-size: 22px; }
+.key.del { background: var(--mist); }
+.key.breit { width: 100%; min-height: 60px; font-size: 25px; }
+/* Zusatztasten je Antwortformat (+ − · : ( ) · Md … E · R · nächstes Feld · nicht möglich): sechs Spalten */
+.tasten.extra { grid-template-columns: repeat(6, 1fr); }
+.tasten.extra .key { min-height: 46px; font-size: 21px; border-radius: 13px; box-shadow: 0 3px 0 var(--ink); }
+.key.op { background: var(--sun); }
+.key.kz { font-size: 16px !important; }
+.key.w2 { grid-column: span 2; }
+.key.w3 { grid-column: span 3; font-size: 16px !important; }
+/* Mehrere Felder (Vorgänger/Nachfolger, Rechnung/Ergebnis, Liste): je Feld ein Kästchen, antippbar */
+.anz.mehr { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 8px; width: 100%; min-width: 0; padding: 8px; white-space: normal; font-size: 26px; }
+.feld {
+  appearance: none; display: grid; gap: 3px; min-width: 88px; padding: 6px 10px 4px; border: 2.5px solid var(--ink); border-radius: 12px;
+  background: #fff; color: var(--ink); font: 400 26px/1.1 var(--display); font-variant-numeric: tabular-nums; cursor: pointer;
+}
+.feld small { font: 800 11.5px/1 var(--body); letter-spacing: .04em; color: var(--muted); }
+.feld.akt { box-shadow: 0 0 0 4px var(--sun); }
+/* Drei und mehr Felder (Generalprobe, Zahlenstrahl A–D): kleiner, damit alle über dem Ziffernfeld Platz haben (H4) */
+.anz.mehr.viele { gap: 6px; padding: 6px; }
+.anz.mehr.viele .feld { min-width: 64px; padding: 3px 8px 2px; font-size: 22px; gap: 1px; }
+.anz.mehr.viele .feld small { font-size: 10.5px; }
+.komma { font: 400 26px/1 var(--display); padding-bottom: 6px; }
+
+/* Lösungsweg: Rechnung in fester Schrift (Kurzform der Division, Spalten), erste Teilzahl unterstrichen wie im Heft */
+.weg li.mono { list-style: none; margin-left: -22px; }
+pre.rechnung {
+  margin: 2px 0; padding: 8px 10px; background: var(--mist); border-radius: 10px; overflow-x: auto;
+  font: 700 17px/1.35 var(--mono); font-variant-numeric: tabular-nums; white-space: pre;
+}
+.weg u, .hilfe u, .tipp-zeile u { text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.hilfe pre.rechnung, .tipp-zeile pre.rechnung { background: rgba(255, 255, 255, .6); }
+
+/* Ordnen: oben die Reihe mit den Zeichen (setzt die App), unten die Zahlen zum Antippen */
+.ordnen { display: grid; gap: 12px; }
+.okette { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 52px; padding: 8px; border: 3px dashed var(--t0); border-radius: 14px; }
+.okette .leer { font: 700 14px/1.3 var(--body); color: var(--muted); }
+.okette.loesung { border-style: solid; border-color: var(--lime); font: 400 22px/1.2 var(--display); }
+.okette.loesung mark { background: var(--sun); border-radius: 6px; padding: 0 3px; }
+.opool { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.ochip {
+  appearance: none; min-width: 64px; min-height: 48px; padding: 8px 12px 6px; border: 3px solid var(--ink); border-radius: 12px;
+  background: #fff; color: var(--ink); font: 400 22px/1 var(--display); font-variant-numeric: tabular-nums; box-shadow: 0 3px 0 var(--ink);
+  cursor: pointer; touch-action: manipulation; user-select: none; -webkit-user-select: none;
+}
+.ochip:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.ochip.gesetzt { background: var(--lime); min-width: 0; padding: 7px 9px 5px; font-size: 19px; }
+.oz { font: 400 22px/1 var(--display); }
+
+/* Zahlenstrahl (SVG, Breite 320): Striche, beschriftete Striche lang, Kreuze mit Buchstaben */
+svg.strahl { display: block; width: 100%; max-width: 360px; height: auto; margin: 2px auto; }
+.strahl .sl, .strahl .st { stroke: var(--ink); stroke-width: 2.5; stroke-linecap: round; }
+.strahl .st.lang { stroke-width: 3; }
+.strahl .sp { fill: var(--ink); }
+.strahl .sz { font: 700 12px/1 var(--body); fill: var(--ink); text-anchor: middle; }
+.strahl .sh { fill: transparent; cursor: pointer; }
+.strahl .kr path { stroke: #B4470C; stroke-width: 3.5; stroke-linecap: round; fill: none; }
+.strahl .kr.neu path { stroke: var(--ink); }
+.strahl .kr.ok path { stroke: #2B7F0E; }
+.strahl .sk { font: 400 15px/1 var(--display); fill: var(--ink); text-anchor: middle; }
+
+/* Themen: Sterne je sicherem Typ, Papier-Typen unter ⅔ eigens */
+.tsterne { letter-spacing: .05em; color: var(--ink); }
+.tpapier { grid-column: 1 / -1; font: 700 12.5px/1.3 var(--body); color: var(--muted); }
+
+/* ---------- ② Papier und Probe ---------- */
+.pinhalt { display: grid; gap: 4px; min-width: 0; }
+.ptext { font: 700 15px/1.35 var(--body); }
+.pfehler { display: grid; gap: 6px; padding: 10px 0; border-top: 2px dashed var(--t0); }
+.pfehler:first-of-type { border-top: 0; }
+.pliste { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 10px; }
+.paufgabe { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: baseline; gap: 8px; padding: 10px 12px; border: 2.5px solid var(--ink); border-radius: 14px; background: var(--mist); }
+.pnr { font: 400 20px/1 var(--display); }
+.pterm { font: 400 24px/1.2 var(--display); font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+/* Dreiergruppen deutlich wie im Buch: Das feste Leerzeichen ist in Lilita One nur 3–4 px breit */
+.q, .anz, .loesung, .vgl-term, .feld, .okette, .ochip, .pterm, .strahl .sk { word-spacing: .18em; }
+.okette .leer, .feld small { word-spacing: normal; }
+.pstatus { font: 400 18px/1 var(--display); color: var(--muted); }
+.pstatus.ok { color: #2B7F0E; }
+.probe-uhr { display: grid; gap: 6px; text-align: center; }
+.uhr { font: 400 64px/1 var(--display); font-variant-numeric: tabular-nums; }
+
+/* ---------- Rundenende ---------- */
+.summary { gap: 14px; justify-content: center; }
+.meilenstein { margin: 0; padding: 12px 14px; border: 3px solid var(--ink); border-radius: 16px; background: var(--t3); color: var(--ink); text-align: center; font: 400 21px/1.2 var(--display); box-shadow: 0 5px 0 var(--ink); }
+.zsum { display: grid; gap: 10px; text-align: center; }
+.zsum-zahlen { display: flex; justify-content: center; align-items: center; gap: 12px; font: 400 30px/1 var(--display); flex-wrap: wrap; margin: 0; }
+.zsum-zahlen span { color: var(--muted); }
+.zsum-zahlen .neu { font-size: 48px; color: var(--ink); }
+.zsum-zahlen b { font-weight: 400; color: var(--muted); }
+.zsum p { font: 700 16px/1.35 var(--body); }
+.mstand { font: 400 19px/1.3 var(--display) !important; }
+
+/* ---------- Einstellungen ---------- */
+.form { display: grid; gap: 18px; }
+.field { display: grid; gap: 8px; }
+.field > b { font: 800 15px/1.2 var(--body); }
+.field small, .toggle small { display: block; font: 600 13.5px/1.35 var(--body); color: var(--muted); }
+.daterow { display: flex; align-items: center; gap: 12px; }
+.daterow input { flex: 1; }
+input[type=date]:disabled { background: var(--mist); color: var(--muted); -webkit-text-fill-color: var(--muted); opacity: 1; }
+.lockline { display: block; margin-bottom: 2px; color: var(--ink); font-weight: 800; }
+.hq-form { display: grid; gap: 12px; }
+#hq-code { font: 600 16px/1.2 var(--mono); }   /* ab 16px zoomt Safari beim Antippen nicht */
+.hq-state { display: grid; gap: 4px; margin: 0; }
+.hq-state b { font: 800 15px/1.3 var(--body); }
+.hq-state small { font: 600 13.5px/1.35 var(--body); color: var(--muted); }
+.hq-btns { display: grid; gap: 10px; justify-items: center; }
+.hq-btns .btn { width: 100%; }
+.toggle { position: relative; display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 14px; cursor: pointer; }
+.toggle b { display: block; font: 800 15px/1.25 var(--body); }
+.toggle input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.toggle i { position: relative; width: 60px; height: 36px; border: 3px solid var(--ink); border-radius: 999px; background: var(--mist); transition: background-color .2s; }
+.toggle i::after {
+  content: ''; position: absolute; top: 3px; left: 3px; width: 24px; height: 24px; border-radius: 50%; background: #fff;
+  border: 3px solid var(--ink); transition: transform .22s cubic-bezier(.3, 1.4, .5, 1);
+}
+.toggle input:checked + i { background: var(--lime); }
+.toggle input:checked + i::after { transform: translateX(24px); }
+.toggle input:focus-visible + i { outline: 3px solid var(--sun); outline-offset: 2px; }
+
+.prose h2 { margin: 0 0 10px; font: 400 23px/1.1 var(--display); }
+.prose p, .prose li { margin: 0 0 10px; font: 600 15.5px/1.5 var(--body); }
+.prose p:last-child, .prose li:last-child { margin-bottom: 0; }
+.prose ul { margin: 0; padding-left: 20px; }
+
+/* ---------- Sheet, Toast, Konfetti ---------- */
+.sheet-wrap {
+  position: fixed; inset: 0; z-index: 40; display: flex; align-items: flex-end; justify-content: center;
+  padding: 16px 16px calc(var(--sb) + 16px); background: rgba(36, 14, 4, .58); animation: fade .15s ease both;
+}
+.sheet {
+  width: 100%; max-width: 480px; max-height: calc(100dvh - var(--st) - 40px); overflow: auto; background: #fff; color: var(--ink);
+  border: 3px solid var(--ink); border-radius: 24px; box-shadow: 0 8px 0 var(--ink); padding: 18px;
+  animation: rise .3s cubic-bezier(.3, 1.3, .5, 1) both; display: grid; gap: 10px;
+}
+.sheet-title { margin: 0; font: 400 26px/1.1 var(--display); }
+.sheet p { margin: 0; font-weight: 600; }
+.sheet-btns { display: grid; gap: 12px; margin-top: 8px; }
+.sheet-btns .btn { font-size: 22px; }
+textarea.code { width: 100%; height: 120px; resize: none; font: 600 12px/1.35 var(--mono); color: var(--ink); border: 3px solid var(--ink); border-radius: 12px; padding: 10px; }
+
+#toast {
+  position: fixed; left: 50%; top: calc(var(--st) + 10px); z-index: 60; max-width: calc(100vw - 32px);
+  transform: translate(-50%, calc(-100% - var(--st) - 24px)); background: var(--ink); color: #fff; border: 3px solid #fff; border-radius: 999px;
+  padding: 10px 16px; font: 800 15px/1.25 var(--body); text-align: center; pointer-events: none;
+  transition: transform .3s cubic-bezier(.3, 1.3, .5, 1);
+}
+#toast.show { transform: translate(-50%, 0); }
+#fx { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 70; pointer-events: none; }
+
+/* ---------- Bewegung ---------- */
+@keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-9px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-5px); } 80% { transform: translateX(3px); } }
+@keyframes holo { to { background-position: 250% 0; } }
+@keyframes stamp { from { opacity: 0; transform: scale(1.8) rotate(-18deg); } }
+@keyframes bumpy { 0% { transform: scale(1); } 40% { transform: scale(1.28) rotate(-4deg); } 100% { transform: scale(1); } }
+@keyframes rise { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } }
+.pop { animation: pop .3s cubic-bezier(.3, 1.3, .5, 1) both; }
+.shake { animation: shake .42s ease both; }
+.bump { animation: bumpy .5s cubic-bezier(.3, 1.6, .5, 1) both; }
+
+/* Bei reduzierter Bewegung nur der Endstand */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+/* Kleine Bildschirme (iPhone SE): Tasten und Aufgabe etwas kleiner, damit alles ohne Scrollen passt */
+@media (max-height: 700px) {
+  .session { gap: 8px; }
+  .key { min-height: 48px; font-size: 25px; border-radius: 14px; }
+  .tasten, .pad { gap: 6px; }
+  .q { font-size: 30px; }
+  .anz { min-height: 52px; font-size: 30px; }
+  .cbody { padding: 12px 16px 14px; gap: 8px; }
+}
+@media (min-width: 560px) {
+  .screen, .session { padding-left: 24px; padding-right: 24px; }
+}
