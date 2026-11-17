@@ -132,10 +132,22 @@ beiseitegelegt. Aufgaben der Runde werden nicht gespeichert (die Generatoren dü
 - `schularbeit.js` → Termin „von Mama/Papa“ (in den Einstellungen gesperrt). `test.seit` = der spätere von `start` und
   dem ersten Start der App (`ui.start`): Rutscht die Installation, rechnet der Plan nicht mit Tagen ohne App.
   (Abweichung von plattform.md; ab der 2. Schularbeit wieder `eingetragen`.)
-- Lagebericht: Typen sind die Karten, Stufe 0 läuft als `neuOffen`; Regeln `MODELL.ampel`. `heuteOffen.neu` = Einstufung
-  + Lernschritte + 1 für ein offenes ②. **Kein `fortschritt.schreiben`** (Legends HQ sagte sonst „Schreibauftrag“,
-  „Text wartet aufs Herzeigen“); `fortschritt.balken` = die 4 Bereiche vom Zettel. Der Plan wird erst nach der
-  Einstufung eingefroren (`plaene` erst dann im Bericht).
+- Lagebericht: Typen sind die Karten, Stufe 0 läuft als `neuOffen`; Regeln `MODELL.ampel`. `heuteOffen.neu` = die
+  Minuten der Einstufung umgerechnet (je 150 s eins, höchstens 12 Min.) + Lernschritte + 1 für ein offenes ②.
+  **Kein `fortschritt.schreiben`** (Legends HQ sagte sonst „Schreibauftrag“, „Text wartet aufs Herzeigen“);
+  `fortschritt.balken` = die 4 Bereiche vom Zettel. Eine Mission, die ohne gezählte Antwort fertig ist (Probetag), steht
+  trotzdem als fertig im Protokoll (`log.f`).
+- **Erststart** (Prüfung, 17.11.): Bis die Einstufung fertig ist, steht im Bericht kein Termin – also weder Prognose noch
+  Plan; Legends HQ zeigt grau „Pause“, die Plan-Karte „Los geht's“. Am Installationstag ist vor dem ersten Übungstag
+  (`start`) oder vor der ersten Antwort nichts offen (`heuteOffen` 0), damit HQ den Tag am nächsten Morgen nicht als
+  ausgelassen zählt.
+- **Plan**: Erst nach der Einstufung eingefroren (`plaene` erst dann im Bericht). Die App legt ihn selbst ab, bevor
+  `bericht()` ihn rechnet (`planVorbereiten`): dieselbe Simulation aus `legends-status.js`, aber bis zum Tag nach der Probe
+  (am Sa kommt dort jeder Typ dran, danach Ruhe wie in der App), Minuten höchstens wie der Tagesdeckel (30). Ohne das
+  rechnete das Modell bis zum Vortag des Tests und meldete trotz jeder Mission „hinter dem Plan“.
+- **Plan-Karte**: Hat das Kind seit dem ersten Übungstag jede Mission gemacht und die Ampel zeigt trotzdem Gelb oder Rot
+  (Trefferquote, Abstand zum Modell), steht dort „Im Plan ✓“ statt „Aufholen“ oder „Notfallplan“, ohne den Satz „Das
+  sehen Mama und Papa auch“.
 - Legends HQ braucht für v1 keinen Deploy: Der Worker nimmt jede App-id, die Eltern-App zeigt unbekannte Apps mit Namen
   aus dem Bericht (Einheitsfarbe, ganz hinten). Lokal: `apps/legends-hq/tools/dev.mjs` kennt Port 8771.
 - `legends-status.js`, `legends-sync.js` sind Kopien aus `apps/legends-hq/shared/` – **hier nie von Hand ändern**
@@ -226,6 +238,12 @@ Platzhaltern und der Test-Probe aus `tools/test/`, zuletzt mit den echten Typen 
 - Kurzer Lernschritt ta-ganz bei 375 × 667: Beispiel mit geg/ges, Rechnung, Kurzform und A:, dann 1 Aufgabe mit
   vorgegebenem 1. Schritt; richtig → ⅓, falsch → bleibt neu, `lsN` + 1, heute nicht noch einmal. Probe bei Stufe 0:
   richtig → ⅓ (mit `g`), falsch → bleibt 0
+
+- Erststart (17.11., Treiber von `pruefung`, Abend 20 Uhr, HQ-Sicht am nächsten Morgen): **Fall 1** Installation Di
+  abends ohne Üben, ab Mi jede Mission – Di und Mi (Einstufung bis Do) „Pause“ und „Los geht's“, HQ Mi früh „Pause“;
+  dann Do–So grün in 3 normalen Läufen. Schwach (Δ −0,15): ab Fr Gelb/Rot über Abstand und Trefferquote, die Plan-Karte
+  zeigt „Im Plan ✓“. **Fall 2** Installation Do: Do „Pause“, Fr/Sa Gelb „Der Plan ist knapp: 60 % sicher“, So Rot
+  „hinter dem Plan“ (Prognose 38 %); die Plan-Karte zeigt jeden Abend „Im Plan ✓“. Probetag im Protokoll als fertig
 
 Noch nicht: iOS-Simulator und echtes iPhone (Tippen auf die Striche, sichere Ränder, Home-Bildschirm-App), Update von
 `ml-v1` auf `ml-v2` mit Service Worker.

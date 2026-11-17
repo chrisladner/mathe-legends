@@ -1185,9 +1185,32 @@ function themaSheet(id) {
 // weder der Tag noch der Speicherstand ändert, und sonst erst die Startseite zeigen, dann füllen.
 let PLAN = null;   // { key, bericht, urteil }
 function planKey() { return today() + '|' + saveCount; }
+// Plan, wie die App ihn fährt (Prüfung Erststart, 17.11.): Das Modell der Ampel wiederholt bis zum Vortag des Tests und
+// kennt weder den Tagesdeckel noch die Ruhe danach. Die App prüft am Sa jeden Typ (Probe) und lässt dann ruhen. Darum
+// rechnet die App den Plan mit derselben Simulation (legends-status.js, unverändert), aber mit dem Tag nach der Probe als
+// Ende – am Sa kommt dort jeder Typ dran –, Minuten höchstens wie der Tagesdeckel. Abgelegt in S.plaene, bevor bericht()
+// den Plan sonst selbst rechnet und einfriert; Schlüssel und Inhalt wie dort. Gibt es ihn schon, bleibt er.
+function planVorbereiten(e) {
+  if (!STATUS || typeof STATUS.simuliere !== 'function' || !e.test || !e.plaene || !pruefTag()) return;
+  const ziel = (e.karten || []).filter(k => k.imZiel);
+  const neuZiel = (e.neuOffen && e.neuOffen.ziel) || 0;
+  const key = e.test.datum + '|' + (ziel.length + neuZiel);
+  if (e.plaene[key]) return;
+  const ende = addDays(pruefTag(), 1);
+  let seit = e.test.seit && e.test.seit < e.heute ? e.test.seit : e.heute;
+  if (daysBetween(seit, ende) < 1) return;   // ab Sa: wie bisher (bericht() rechnet ihn)
+  const damals = ziel.filter(k => !k.since || k.since <= seit);
+  const neuDamals = neuZiel + (ziel.length - damals.length);
+  const r = STATUS.simuliere(Object.assign({}, e, {
+    heute: seit, test: Object.assign({}, e.test, { datum: ende }), karten: damals, neuOffen: { ziel: neuDamals, gesamt: neuDamals }
+  }), 0, STATUS.P_PLAN || 0.85, 200);
+  if (r) e.plaene[key] = { seit, sicher: r.sicher, minuten: Math.min(r.minuten, MODELL.deckelMin) };
+}
 function planNow() {
   if (PLAN && PLAN.key === planKey()) return PLAN;
-  const bericht = STATUS.bericht(berichtEingabe());
+  const eingabe = berichtEingabe();
+  planVorbereiten(eingabe);
+  const bericht = STATUS.bericht(eingabe);
   save();   // bericht() trägt fertig, offen und sicher von heute ins Protokoll ein und friert den Plan je Termin ein
   PLAN = { key: planKey(), bericht, urteil: STATUS.urteil(bericht, today()) };
   return PLAN;
@@ -1212,9 +1235,28 @@ function planSlot() {
 const DAY_STATE = { fertig: 'Mission geschafft', teil: 'angefangen, Mission noch offen', aus: 'nicht geübt', frei: 'nichts fällig', offen: 'noch offen' };
 // Stufen der Ampel → Ton der Karte: grün Lime, gelb Sonne, rot = „Notfallplan“ in Orange (nie Rot), ohne Test grau
 const PLAN_TON = { gruen: 'ok', gelb: 'catch', rot: 'sos' };
+// Alle Missionen seit dem ersten Übungstag gemacht? (Tage bis gestern: fertig oder nichts fällig)
+function alleMissionen(b) {
+  const ab = [PLAN_START, S.ui.start].filter(isDay).sort().pop() || '';
+  return (b.tage || []).every(x => x.d < ab || x.s === 'fertig' || x.s === 'frei');
+}
 function planHTML(p) {
   const b = p.bericht, u = p.urteil;
-  const tone = PLAN_TON[u.stufe] || 'neutral';
+  let tone = PLAN_TON[u.stufe] || 'neutral', kind = u.kind, wieEltern = true;
+  if (!einstufungFertig()) {
+    // Vor der Einstufung kein Plan (Bericht ohne Termin): neutral, ohne Aufholen und ohne Notfallplan
+    kind = { titel: 'Los geht\'s', text: b.heute && b.heute.fertig && Object.keys(S.f).length
+      ? 'Mission geschafft ✓ Nach der Einstufung steht hier dein Plan.' : 'Zeig zuerst, was du schon kannst. Danach steht hier dein Plan.' };
+    tone = 'neutral';
+  } else if ((u.stufe === 'gelb' || u.stufe === 'rot') && alleMissionen(b)) {
+    // Jede Mission gemacht, das Modell der Ampel meldet trotzdem Gelb oder Rot (es kennt den Tagesdeckel und die Ruhe
+    // vor dem Test nicht): Das Kind sieht dann nie „Aufholen“ oder „Notfallplan“ (Projektleitung, 17.11.)
+    const termin = b.test, tin = termin ? daysBetween(today(), termin.datum) : null;
+    const bis = !termin ? '' : tin === 0 ? `Heute: ${termin.titel}.` : tin === 1 ? `Morgen: ${termin.titel}.` : `${termin.titel} in ${tin} Tagen.`;
+    kind = { titel: 'Im Plan ✓', text: `${bis} ${b.heute && b.heute.fertig ? 'Mission geschafft ✓ Jeden Tag deine Mission – genau so geht’s.' : 'Mach heute deine Mission, dann bleibst du im Plan.'}`.trim() };
+    tone = 'ok';
+    wieEltern = false;
+  }
   const t = today(), e = S.log[t] || {};
   const todayState = e.f ? 'fertig' : (e.a || 0) + (e.n || 0) > 0 ? 'teil' : b.heute.faellig + b.heute.neu > 0 ? 'offen' : 'frei';
   const days = b.tage.slice(-6).map(x => ({ d: x.d, s: x.s })).concat({ d: t, s: todayState, today: true });
@@ -1224,10 +1266,10 @@ function planHTML(p) {
     return `<li class="pday ${x.s}${x.today ? ' today' : ''}" aria-label="${x.today ? 'Heute' : WEEKDAYS[wd]}: ${DAY_STATE[x.s] || ''}"><i aria-hidden="true"></i><span aria-hidden="true">${name}</span></li>`;
   }).join('');
   return `<div class="panel plan ${tone}" id="plan">
-    <div class="plan-head"><span class="eyebrow">Dein Plan</span><span class="plan-stamp">${esc(u.kind.titel)}</span></div>
-    <p class="plan-text">${esc(u.kind.text)}</p>
+    <div class="plan-head"><span class="eyebrow">Dein Plan</span><span class="plan-stamp">${esc(kind.titel)}</span></div>
+    <p class="plan-text">${esc(kind.text)}</p>
     <ol class="plan-days" aria-label="Die letzten 7 Tage">${dots}</ol>
-    <p class="fineprint">Das sehen Mama und Papa auch.</p>
+    ${wieEltern ? '<p class="fineprint">Das sehen Mama und Papa auch.</p>' : ''}
   </div>`;
 }
 
@@ -2432,9 +2474,18 @@ function fortschrittBericht(z = zielStand()) {
 }
 function berichtEingabe() {
   vorStartTage();
-  const test = nextTest();
+  // Erststart (Prüfung, 17.11.): Bis die Einstufung fertig ist, gibt es keinen Plan – im Bericht steht kein Termin, also
+  // weder Prognose noch Plan. Legends HQ zeigt dann grau „Pause“ wie bei einer App ohne Termin, die Plan-Karte
+  // „Los geht's“. Vorher rechnete das Modell alle Typen als neu (150 s je Typ) und meldete „Aufholen“ und „Notfallplan“.
+  const test = einstufungFertig() ? nextTest() : null;
   const plan = tagesPlan();
   const pi = papierInfo();
+  // Am Tag der Installation ist nichts offen, solange es vor dem ersten Übungstag ist oder noch nichts geübt wurde –
+  // sonst zählte Legends HQ den Tag am nächsten Morgen als ausgelassen (HQ-M1)
+  const nochNichts = (!!PLAN_START && today() < PLAN_START) || (S.ui.start === today() && !Object.keys(S.f).length);
+  // Mission geschafft auch ohne gezählte Antwort (Probetag: Die Probe zählt nur Zeit) – sonst stünde der Sa als „frei“
+  const m = missionHeute(plan);
+  if (STATUS && m.fertig && m.getan) STATUS.eintrag(S.log, today()).f = 1;
   const mitStufe = id => S.f[id] && S.f[id].lv >= 1;
   const imUmfang = id => ZIEL_SET.has(id) || EXTRA_SET.has(id);
   const alle = Object.keys(S.f).filter(id => TYP[id] && imUmfang(id));
@@ -2450,8 +2501,10 @@ function berichtEingabe() {
     neuOffen: { ziel: ZIEL.filter(id => !mitStufe(id)).length, gesamt: [...ZIEL, ...EXTRA].filter(id => !mitStufe(id)).length },
     // Mission = Runde (Einstufung, Lernschritte, Wiederholungen) und ② Papier (zählt als eine neue Aufgabe).
     // Am Testtag ist nichts offen (Aufwärmen ist freiwillig).
-    heuteOffen: plan.phase === 'testtag' ? { faellig: 0, neu: 0 }
-      : { faellig: plan.wdh.length, neu: plan.einstufung.length + plan.lernschritte.length + (pi && pi.offen ? 1 : 0) },
+    // Die Einstufung zählt nicht je Typ als „neu“ (das Modell rechnet 150 s je neuem Typ), sondern nach ihren Minuten
+    // (höchstens 12): Sonst meldete HQ vor der Einstufung „53 Minuten liegen offen“
+    heuteOffen: plan.phase === 'testtag' || nochNichts ? { faellig: 0, neu: 0 }
+      : { faellig: plan.wdh.length, neu: (plan.einstufung.length ? Math.max(1, Math.ceil(einstRestSek(plan.einstufung) / MODELL.ampel.sekNeu)) : 0) + plan.lernschritte.length + (pi && pi.offen ? 1 : 0) },
     regeln: Object.assign({}, MODELL.ampel),
     fortschritt: fortschrittBericht(),
     log: S.log,
