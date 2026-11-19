@@ -397,7 +397,7 @@ const STRATEGIE = {
   'sub-begriffe': 'Schreib die Rechnung mit ? an. Rechne mit der Umkehraufgabe und mach die Probe.',
   'ta-rechnung': 'Stell dir die Geschichte vor: Wird es mehr oder weniger? Kommt mehrmals dasselbe dazu oder wird gerecht verteilt?',
   'ta-ganz': 'Geh die Aufgabe noch einmal durch: geg, ges, Rechnung. Passt dein Ergebnis zur Frage?',
-  'mul-kopf-stufe': 'Zähl die Nullen: mal 10 eine, mal 100 zwei, mal 1 000 drei Nullen mehr.',
+  'mul-kopf-stufe': 'Zähl die Nullen: mal 10 eine, mal 100 zwei, mal 1 000 drei Nullen mehr.',
   'mul-kopf-nullen': 'Zuerst ohne Nullen rechnen, dann alle Nullen dazuzählen.',
   'mul-kopf-drei': 'Rechne in zwei Schritten: zuerst zwei Faktoren, dann mal den dritten. Vertauschen ist erlaubt.',
   'mul-kopf-klammer': 'Klammer zuerst, dann mal.',
@@ -443,8 +443,8 @@ const FEHLERARTEN = {
   genau: 'Schau genau, Ziffer für Ziffer: Sind wirklich alle Stellen gleich?',
   stellen: 'Zuerst die Stellen zählen: Mehr Stellen heißt größer. Bei gleich vielen Stellen von links vergleichen.',
   richtung: 'Schau, womit du beginnst: mit der kleinsten oder mit der größten Zahl?',
-  ueberNull: 'Eins weniger: Alle Nullen hinten werden 9, die Ziffer davor wird 1 kleiner. 3 400 → 3 399.',
-  ueberNeun: 'Eins mehr: Alle Neuner hinten werden 0, die Ziffer davor wird 1 größer. 2 699 → 2 700.',
+  ueberNull: 'Eins weniger: Alle Nullen hinten werden 9, die Ziffer davor wird 1 kleiner. 3 400 → 3 399.',
+  ueberNeun: 'Eins mehr: Alle Neuner hinten werden 0, die Ziffer davor wird 1 größer. 2 699 → 2 700.',
   vertauscht: 'Vorgänger heißt eins davor, also eins weniger. Nachfolger heißt eins danach, also eins mehr.',
   grenzen: 'Die Grenzen zählen nicht mit: nur die Zahlen dazwischen.',
   gerade: 'Gerade Zahlen enden auf 0, 2, 4, 6 oder 8. Ungerade auf 1, 3, 5, 7 oder 9.',
@@ -455,7 +455,7 @@ const FEHLERARTEN = {
   // Runden und Überschlag
   abgerundet: 'Rechts daneben steht 5, 6, 7, 8 oder 9? Dann rundest du auf.',
   aufgerundet: 'Rechts daneben steht 0, 1, 2, 3 oder 4? Dann rundest du ab.',
-  neunKippt: 'Aus der 9 wird beim Aufrunden 10: Die Ziffer davor wird 1 größer. 7 951 ≈ 8 000.',
+  neunKippt: 'Aus der 9 wird beim Aufrunden 10: Die Ziffer davor wird 1 größer. 7 951 ≈ 8 000.',
   falscheStelle: 'Unterstreich zuerst die Stelle, auf die du rundest. Die Ziffer rechts daneben entscheidet.',
   ueGenau: 'Beim Überschlag rechnest du nicht genau: zuerst jede Zahl runden, dann rechnen.',
   ueErstRunden: 'Zuerst jede Zahl runden, dann rechnen. Nicht erst rechnen und dann runden.',
@@ -481,7 +481,7 @@ const FEHLERARTEN = {
   punktVorStrich: 'Punkt vor Strich: zuerst · und :, dann + und −. Klampunstri!',
   zweiSchritte: 'Zwei Schritte: Rechne zuerst a) und nimm das Ergebnis für b).',
   // Mal und Durch
-  nullenMal: 'Zähl die Nullen: Bei · 100 kommen zwei Nullen dazu, bei · 1 000 drei.',
+  nullenMal: 'Zähl die Nullen: Bei · 100 kommen zwei Nullen dazu, bei · 1 000 drei.',
   extraNull: 'Aus 5 · 4 wird 20. Diese Null kommt noch zu den angehängten Nullen dazu.',
   faktor: 'Alle Faktoren mitnehmen: zuerst zwei zusammen, dann den dritten.',
   zeileVerrutscht: 'Jede Zeile eine Stelle weiter rechts. Der Punkt hält den Platz frei.',
@@ -490,7 +490,7 @@ const FEHLERARTEN = {
   restZuGross: 'Der Rest muss kleiner sein als der Divisor. Sonst passt noch einmal hinein.',
   durchNull: 'Durch 0 kann man nicht dividieren: nicht möglich.',
   nullDurch: '0 geteilt durch eine Zahl ist 0. Nur durch 0 geht es nicht.',
-  nullenStreichen: 'Gleich viele Nullen streichen: 54 000 : 60 = 5 400 : 6 = 900.',
+  nullenStreichen: 'Gleich viele Nullen streichen: 54 000 : 60 = 5 400 : 6 = 900.',
   pruefen: 'Kann das stimmen? Mach einen Überschlag oder die Probe.'
 };
 
@@ -1095,8 +1095,8 @@ const rsUeberschlag = {
       return aufgabe('rs-ueberschlag', { variante, text, term: zahlen.map(F).join(` ${op} `), eingabe: 'zahl', loesung: ue, weg, fehler: f.map,
         rueck: op === ':' ? { _: 'Beide Zahlen auf Zehner runden, dann gleich viele Nullen streichen und dividieren.' } : {} });
     }
-    return aufgabe('rs-ueberschlag', { variante: 'hunderter', text: 'Überschlag: Runde jede Zahl auf Hunderter.', term: '4 349 + 249 + 249', loesung: 4700,
-      weg: ['Runde jede Zahl auf Hunderter: 4 349 → 4 300, 249 → 200, 249 → 200', 'Ü: 4 300 + 200 + 200 = 4 700'], fehler: { 4847: 'ueGenau', 4800: 'ueErstRunden' } });
+    return aufgabe('rs-ueberschlag', { variante: 'hunderter', text: 'Überschlag: Runde jede Zahl auf Hunderter.', term: '4 349 + 249 + 249', loesung: 4700,
+      weg: ['Runde jede Zahl auf Hunderter: 4 349 → 4 300, 249 → 200, 249 → 200', 'Ü: 4 300 + 200 + 200 = 4 700'], fehler: { 4847: 'ueGenau', 4800: 'ueErstRunden' } });
   }
 };
 
@@ -2104,7 +2104,7 @@ const taGanzTyp = {
 // schriftlich mit der linken Ziffer des 2. Faktors beginnen, rechts ein Punkt als Platzhalter, jede Zeile eine Stelle weiter
 // ================================================================
 const mulKopfStufe = {
-  id: 'mul-kopf-stufe', thema: 'multiplikation', titel: 'Mal 10, 100, 1 000', quelle: 'Üb. S. 28 Nr. 2a · Buch S. 88–93',
+  id: 'mul-kopf-stufe', thema: 'multiplikation', titel: 'Mal 10, 100, 1 000', quelle: 'Üb. S. 28 Nr. 2a · Buch S. 88–93',
   rang: 1, wo: 'app', auswahl: false, nah: ['div-kopf', 'mul-kopf-nullen'], voraus: [], gewicht: 1, sek: 10, sekNeu: 15, varianten: [],
   erzeuge(rnd) {
     // 406 · 100 = 40 600: Zahl mit Nullen drin oder hinten, · 10/100/1 000, auch vertauscht

@@ -379,8 +379,11 @@ div.trow { cursor: default; box-shadow: none; }
   font: 400 34px/1.2 var(--display); font-variant-numeric: tabular-nums;
 }
 .anz .leer { color: #D0AE9A; }
-.anz .akt { box-shadow: inset 0 -5px 0 var(--sun); padding: 0 2px; }
+.anz span.akt { box-shadow: inset 0 -5px 0 var(--sun); padding: 0 2px; }   /* nicht für .feld.akt: das behält sein Polster */
 .anz .rr { color: var(--muted); }
+.anz.mehr .rr { align-self: center; padding-top: 12px; }
+/* Rest-Aufgabe (ml-v3): „Prüfen“ mit leerem Rest-Feld fragt nach dem Rest, statt zu werten */
+.rest-frage { margin: 0; padding: 8px 12px; border-radius: 12px; background: #FFF4CC; text-align: center; font: 800 16px/1.3 var(--body); }
 .anz .nm { font-size: 24px; }
 .typname { margin: 0; font: 800 13px/1.2 var(--body); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .answer-line { margin: 0; font: 700 18px/1.35 var(--body); }
@@ -489,15 +492,25 @@ svg.strahl { display: block; width: 100%; max-width: 360px; height: auto; margin
 /* ---------- ② Papier und Probe ---------- */
 .pinhalt { display: grid; gap: 4px; min-width: 0; }
 .ptext { font: 700 15px/1.35 var(--body); }
+.phinweis { display: block; margin-top: 6px; font: 800 14px/1.3 var(--body); }
 .pfehler { display: grid; gap: 6px; padding: 10px 0; border-top: 2px dashed var(--t0); }
 .pfehler:first-of-type { border-top: 0; }
 .pliste { list-style: none; margin: 12px 0; padding: 0; display: grid; gap: 10px; }
 .paufgabe { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; align-items: baseline; gap: 8px; padding: 10px 12px; border: 2.5px solid var(--ink); border-radius: 14px; background: var(--mist); }
 .pnr { font: 400 20px/1 var(--display); }
 .pterm { font: 400 24px/1.2 var(--display); font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
-/* Dreiergruppen deutlich wie im Buch: Das feste Leerzeichen ist in Lilita One nur 3–4 px breit */
-.q, .anz, .loesung, .vgl-term, .feld, .okette, .ochip, .pterm, .strahl .sk { word-spacing: .18em; }
+/* Zahlen wie im Buch (ml-v3): In der Zahl eine schmale Lücke, um Rechenzeichen deutlich mehr Abstand. Die Lücke zwischen
+   Dreiergruppen steht in .zl (app.js) und bekommt kein word-spacing; word-spacing weitet nur die normalen Leerzeichen um
+   + − · : =. Vorher waren beide gleich breit, und eine große Zahl sah aus wie zwei. */
+.q, .anz, .loesung, .vgl-term, .feld, .okette, .ochip, .pterm, .strahl .sk { word-spacing: .18em; --zl: 1em; }
 .okette .leer, .feld small { word-spacing: normal; }
+/* In der Textschrift ist das feste Leerzeichen so breit wie ein normales: Wo vor allem gerechnet wird, die Leerzeichen um
+   die Rechenzeichen etwas weiter (Fließtext wie .atext bleibt, wie er ist) */
+.weg li, .hilfe, .tipp-zeile, .answer-line, .note.hinweis { word-spacing: .1em; }
+pre.rechnung { word-spacing: normal; }   /* Rechenspalte: jedes Zeichen gleich breit, sonst verrutschen die Spalten */
+/* Die Lücke selbst: das feste Leerzeichen ohne word-spacing, knapp ein Fünftel Geviert wie ein schmales Leerzeichen im Buch
+   (Lilita One: so breit, wie die Schrift es vorsieht; in der Textschrift ist es breiter, darum dort kleiner gesetzt) */
+.zl { word-spacing: 0; font-size: var(--zl, .65em); }
 .pstatus { font: 400 18px/1 var(--display); color: var(--muted); }
 .pstatus.ok { color: #2B7F0E; }
 .probe-uhr { display: grid; gap: 6px; text-align: center; }

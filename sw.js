@@ -1,7 +1,7 @@
 /* Mathe Legends – Offline-Cache, Muster von Spell Legends (dl-v8) bzw. Word Legends (seit wl-v5).
    App-Dateien: mit Internet immer frisch vom Server (höchstens 2,5 s warten), ohne Internet aus dem Cache.
    Schrift von Google Fonts: einmal laden, dann aus dem Cache. */
-const VERSION = 'ml-v2';   // wie VERSION in app.js – immer beide zusammen hochzählen
+const VERSION = 'ml-v3';   // wie VERSION in app.js – immer beide zusammen hochzählen
 // Nur eigene Caches anfassen: Word, Geo und Spell Legends liegen auf derselben Adresse (chrisladner.github.io).
 // Streng: gelöscht werden nur alte Versions-Caches „ml-v…“ (das Präfix „ml-“ gibt es woanders schon, z. B. „ml-bus-“).
 const OWN = /^ml-v\d+$/;

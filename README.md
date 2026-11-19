@@ -5,8 +5,9 @@ Heft, deren Ergebnisse das Kind eintippt. Jede Aufgabenart hat Stufen (neu · �
 die Show, wenn er sicher sitzt.“ Kein App Store, kein Build-Schritt, keine Abhängigkeiten. Läuft offline, sobald sie
 einmal geöffnet wurde. Gerüst aus Spell Legends (`dl-v8`) als Steinbruch.
 
-**Stand `ml-v2` (16.11.2026): Lernlogik nach Teil B, alle Ansichten und die Generalprobe fertig (T1), echte Aufgabentypen
-von T2, nicht veröffentlicht.**
+**Stand `ml-v3` (19.11.2026): Rest-Eingabe mit zwei Feldern
+(leerer Rest wird nicht gewertet), schmale Lücke in großen Zahlen, Lernschritte für noch nie gelernte Typen vor Lücken,
+Tagesdeckel geeicht auf die echten Sekunden.** Grundlage ml-v3: Auftrag der Projektleitung vom 19.11. (Lernauftrag Abschnitt 5).
 Grundlage: `auftraege/2026-11-16_mathe-app.md` (Stoff 2d, Lernmodell Teil A und B in Abschnitt 3, Erlebnis in 4,
 Entscheidungen in 5, Technik-Plan in 6). OK der Eltern zum Bauen: 16.11., 21:10 („ja so bauen mit 26“). Noch offen:
 
@@ -34,10 +35,11 @@ Entscheidungen in 5, Technik-Plan in 6). OK der Eltern zum Bauen: 16.11., 21:10 
 | Lerneinheit | Aufgabentyp (`aufgaben.js` → `MATHE.typen`), nicht Karte. Die App erzeugt jede Aufgabe neu (Zufall mit Seed). `schularbeit.js` → `typen`: die 26 Kern-Typen (zählen für BEREIT), `extra`: geübt, zählen nie |
 | Stufen | 0 neu · 1 ⅓ · 2 ⅔ · 3 sicher · 4–6 nach dem Test. Pausen 1 · 1 · 2 · 7 · 14 · 30 Tage, höchste Stufe 60 |
 | Aufstieg | nur durch den ersten Versuch des Tages in der gemischten Runde, ohne Tipp. Einstufung, Lernschritt, Tipp und Zwilling heben nie darüber hinaus |
-| Fehler | −1 Stufe, nie unter ⅓, morgen wieder. Nach 3 anderen Aufgaben kommt ein **Zwilling** (gleicher Typ, neue Zahlen, nur Übung). Ist auch er falsch: **Lücke** → Mi–Fr Lernschritt am nächsten Tag, Sa/So gleich in derselben Runde. Höchstens 2 Fehler je Typ und Runde. Eine offene Lücke kommt nie gemischt, nur als Lernschritt |
+| Fehler | −1 Stufe, nie unter ⅓, morgen wieder. Nach 3 anderen Aufgaben kommt ein **Zwilling** (gleicher Typ, neue Zahlen, nur Übung). Ist auch er falsch: **Lücke** → Mi–Fr Lernschritt ab dem nächsten Tag (seit ml-v3 nach den neuen Typen, soweit der Tagesdeckel reicht), Sa/So gleich in derselben Runde. Höchstens 2 Fehler je Typ und Runde. Eine offene Lücke kommt nie gemischt, nur als Lernschritt |
 | Einstufung | 2 Aufgaben je Typ (Schularbeits-Niveau), mit Buch-Beleg (`einstufung.beleg`) 1: richtig → ⅔, falsch → ⅓. Reihenfolge `einstufung.reihenfolge` (Teil B: zs-ablesen und rs-runden zum Aufwärmen, …, zuletzt die vier mul-kopf). „Weiß ich noch nicht“ = 0; 2 von 2 → ⅔, 1 → ⅓, 0 → Lernschritt. Zwei Typen eines Themas auf 0 → die schwereren ohne Frage auf 0. Höchstens 12 Min., der Rest am nächsten Tag zuerst. Papier-Typen stufen sich in ② ein (1 von 1 → ⅓, mit Beleg ⅔) |
-| Lernschritt | Beispiel → Aufgabe mit vorgegebenem 1. Schritt → selbst, bis zwei in Folge richtig (= ⅓); höchstens 6 Aufgaben, sonst „morgen mit Hilfe“. **Papier-Typ kurz** (Prüfung Runde 1): Beispiel mit Rechenweg (bei ta-ganz mit geg/ges/A), dann 1 Aufgabe mit vorgegebenem 1. Schritt; richtig → ⅓, falsch → morgen noch einmal kurz. Ein Papier-Typ, der in ② auf 0 fällt, wartet bis morgen. Reihenfolge: `lernFolge`, dann Voraussetzung, dann Gewicht. Menge je Tag, einmal am Tag festgelegt (`S.day.lsQuote`): am Tag der Einstufung höchstens 2, danach höchstens 8 – beides nur, soweit der **Tagesdeckel** reicht; was nicht passt, kommt am nächsten Tag. Neue Lernschritte bis Test − 3 (Fr, Überlauf: ohne die Grenze 8, ② und Extra werden dafür zuerst kleiner; was auch dann nicht passt, bleibt neu); **Sa/So keine neuen, nur Lücken**. Gezählt wird ein Lernschritt erst, wenn er beendet ist |
-| Tagesdeckel | Mi–Fr höchstens 30 Min. geschätzt (`MODELL.deckelMin`): Gemachtes + Einstufungsrest + Lücken + Fällige + ② (Heft und 15 s Eintippen je Ergebnis) + neue Lernschritte + Extra. Schätzung: erster Kontakt `sekNeu`, sonst `sek`; Lernschritt = Beispiel 30 s + 5 Aufgaben (mindestens 40 s), Papier-Typ Beispiel + 1 Aufgabe. Was zuerst rutscht: neue Lernschritte, dann Extra; am Fr zuerst ② und Extra. Die Mission zeigt dieselben Minuten (vor der Einstufung mit einer Vorschau auf die Lernschritte) |
+| Lernschritt | Beispiel → Aufgabe mit vorgegebenem 1. Schritt → selbst, bis zwei in Folge richtig (= ⅓); höchstens 6 Aufgaben, sonst „morgen mit Hilfe“. **Papier-Typ kurz** (Prüfung Runde 1): Beispiel mit Rechenweg (bei ta-ganz mit geg/ges/A), dann 1 Aufgabe mit vorgegebenem 1. Schritt; richtig → ⅓, falsch → morgen noch einmal kurz. Ein Papier-Typ, der in ② auf 0 fällt, wartet bis morgen. **Auswahl (ml-v3):** zuerst Typen auf Stufe 0, die noch nie einen Lernschritt hatten (kein `ls`), dann Stufe 0 nach „morgen mit Hilfe“, dann Lücken; darin `lernFolge`, dann Voraussetzung, dann Gewicht. Jeder kommt dran, solange er in den **Tagesdeckel** passt; passt einer nicht, wird der nächste versucht; ein Typ, dessen Voraussetzung noch auf 0 steht und heute nicht drankommt, wartet. Obergrenze für neue: am Tag der Einstufung 2, danach 8. Die Auswahl wird einmal am Tag festgelegt (`S.day.lsIds`, dazu `lsQuote` = Zahl der neuen); was nicht passt, kommt am nächsten Tag. Neue Lernschritte bis Test − 3 (Fr, Überlauf: ohne die Grenze 8, ② und Extra werden dafür zuerst kleiner; was auch dann nicht passt, bleibt neu, Lücken kommen dann am Sa in der Runde); **Sa/So keine neuen, nur Lücken** (alle). Gezählt wird ein Lernschritt erst, wenn er beendet ist. Hat ml-v2 den Tag schon festgelegt (Update am selben Tag), rechnet ml-v3 neu, solange heute noch keine Runde gespielt ist; sonst geht es weiter wie festgelegt |
+| Tagesdeckel | Mi–Fr höchstens 30 Min. geschätzt (`MODELL.deckelMin`): Gemachtes + Einstufungsrest + Fällige + ② (Heft und 15 s Eintippen je Ergebnis) + Lernschritte + Extra. Schätzung: erster Kontakt `sekNeu`, sonst `sek`; Lernschritt = Beispiel 30 s + 5 Aufgaben (mindestens 40 s), Papier-Typ Beispiel + 1 Aufgabe. Was zuerst rutscht: Lernschritte, dann Extra; am Fr zuerst ② und Extra. Am Fr wird der Platz für ② mit den Lernschritten festgelegt (`S.day.pSek`), sonst wüchse ② nach der Runde (die echten Sekunden sind kleiner als die Schätzung). Die Mission zeigt dieselben Minuten (vor der Einstufung mit einer Vorschau auf die Lernschritte) |
+| Eichung (ml-v3) | Die App-Teile im Deckel (Wiederholungen, Aufgaben im Lernschritt, Einstufungsrest, Extra) mal **Faktor echt/geschätzt** der letzten 3 Übungstage aus `log` (ohne Probetag, höchstens 7 Tage zurück), begrenzt auf 0,75–1,3 (`MODELL.eichung`); unter 10 Min. Schätzung Faktor 1. `log.s` misst je Aufgabe nur Zeigen bis Antwort (höchstens 60 s), nicht das Heft und nicht das Lesen von Beispiel und Rückmeldung: Darum vergleicht die Eichung nur App-Aufgaben, und Heft, Eintippen, Beispiel sowie die Grenzen 12 Min. (Einstufung, ②) und 5 Min. (Extra) bleiben, wie sie sind. Die Schätzung eines vergangenen Tages kommt aus `log` (a, n), `since` der Typen und dem ②-Blatt des Tages (`ML.eichung()` zeigt jeden Tag) |
 | Mischen | nach dem ersten Kontakt nur gemischt; höchstens 40 % geblockt; nie zweimal derselbe Typ hintereinander; Verwechselbares (`nah`) nah beieinander; **keine Überschrift und keine Themenfarbe vor der Antwort** (der Name des Typs steht erst in der Rückmeldung) |
 | Dreierpack | `< > =` kommt als Pack aus 3; Aufstieg nur bei 3 von 3; jeder falsche Teil ist ein Fehler; in `quote7` zählen die Teile einzeln |
 | Extra | ab Test − 3 (Fr) hinten an der Runde, höchstens 5 Min. und nur im Rest des Tagesdeckels (`S.day.xSek`): zuerst noch nie Gesehenes, dann Fälliges. Erster Kontakt ohne Einstufung auf ⅓. Zählen nie für BEREIT und halten die Mission nicht offen |
@@ -70,7 +72,7 @@ Tasten, die das iPhone-Ziffernfeld nicht hat. Ziffern 1–9, 0, ⌫, Prüfen; Zu
 | `eingabe` | Zusatztasten | Antwort an `MATHE.pruefe` |
 |---|---|---|
 | `zahl` | – | Text aus Ziffern |
-| `rest` | R | `{ q, r }` |
+| `rest` | R (springt ins Rest-Feld); zwei Felder „Ergebnis“ und „Rest“, beide antippbar | `{ q, r }`. **Seit ml-v3 gilt ein leeres Rest-Feld nie als 0:** „Prüfen“ wertet dann nicht, springt ins Rest-Feld und fragt „Und der Rest? Tippe 0, wenn keiner bleibt.“ (Runde, ②, Probe). Mit „nicht möglich“ braucht es keinen Rest |
 | `term` | + − · : ( ) | Text, z. B. `(29+34):7` |
 | `kuerzel` | Md HM ZM M HT ZT T H Z E | Text, z. B. `2HT 3T 7H 8Z` |
 | `liste` | nächste Zahl | Liste von Texten |
@@ -82,6 +84,13 @@ Tasten, die das iPhone-Ziffernfeld nicht hat. Ziffern 1–9, 0, ⌫, Prüfen; Zu
 
 - Führende Null gesperrt („0542“ gibt es nicht), die 0 allein geht. Jedes Kürzel nur einmal.
 - Die Anzeige setzt Dreiergruppen selbst (Buch: ab 4 Stellen); geübt wird das auf Papier (Lernauftrag 2a).
+- **Lücke in Zahlen (ml-v3):** aufgaben.js trennt Dreiergruppen mit U+00A0. `zl()` in app.js setzt dieses Leerzeichen zwischen
+  zwei Ziffern in eine Spanne `.zl` ohne `word-spacing` (Titelschrift: so breit, wie Lilita One es vorsieht, ca. 0,19 Geviert;
+  Textschrift: 0,65 em). Um Rechenzeichen bleibt `word-spacing: .18em` (Titelschrift) bzw. `.1em` (Lösungsweg, Hilfe, Tipp,
+  Antwortzeile, Hinweis). Gemessen in Chrome: „427 825“ in der Aufgabe 7,4 px Lücke gegen 14,5 px vor dem Plus (39 px Schrift),
+  im Lösungsweg 2,7 gegen 5,3 px. Vorher waren beide gleich breit, und eine große Zahl sah aus wie zwei. Nie für
+  Attribute, SVG-Text und die Rechenspalte (feste Schrift; `pre.rechnung` hat ausdrücklich kein `word-spacing`, sonst
+  verrutschen die Spalten). Neue Texte mit Zahlen immer mit U+00A0 schreiben (`F()`), nie mit normalem Leerzeichen.
 - Kein „fast“ bei Zahlen: eine Ziffer daneben ist falsch. Die Rückmeldung zeigt die richtige Zahl in Dreiergruppen und
   markiert die Ziffern, die nicht stimmen; die falsche Zahl selbst steht nicht da.
 - Mac-Tastatur zum Testen: Ziffern, Rücktaste, Enter, R, + - * / : ( ), Tab (nächstes Feld), < > =.
@@ -121,7 +130,7 @@ selbst, ohne Fehlerart.
 
 `settings` (name, testDate, testSince, sfx) · `f` (je Typ: lv, due, last, ok, bad, since; dazu c, cx, g, fz, ns, lk, ls,
 lsN, fa; Extra-Typen genauso) · `papier` (Blätter `p-JJJJ-MM-TT` und die Probe: items, erg, fertig, start, ende;
-②-Blätter nach 60 Tagen weg) · `stats` · `day` (date, ls, lsQuote, estop, esek, en, r, xSek) · `ui` (hideInstall, onboarded,
+②-Blätter nach 60 Tagen weg) · `stats` · `day` (date, ls, lsQuote, estop, esek, en, r, xSek; seit ml-v3 lsIds, pSek) · `ui` (hideInstall, onboarded,
 start, e1, bereit, perfekt, neues) · `log` ·
 `plaene`. Neue Felder nur über `fresh()` und `upgrade()`; ein unlesbarer Stand wird als `mathelegends.v1.kaputt`
 beiseitegelegt. Aufgaben der Runde werden nicht gespeichert (die Generatoren dürfen sich ändern), Papier-Aufgaben schon
@@ -156,7 +165,7 @@ beiseitegelegt. Aufgaben der Runde werden nicht gespeichert (die Generatoren dü
 ## Offline und Updates
 
 Wie Spell Legends: App-Dateien mit Internet frisch vom Server (höchstens 2,5 s warten), sonst aus dem Cache. Neue
-`VERSION` (in `sw.js` **und** `app.js`, Stand `ml-v2`) wird beim Öffnen und beim Zurückholen erkannt; die App lädt neu,
+`VERSION` (in `sw.js` **und** `app.js`, Stand `ml-v3`) wird beim Öffnen und beim Zurückholen erkannt; die App lädt neu,
 sobald sie auf der Startseite ist, nie mitten in einer Runde. Der Service Worker löscht nur alte eigene Versions-Caches
 (`/^ml-v\d+$/`; das Präfix `ml-` gibt es woanders schon). Die laufende Version steht unten in den Einstellungen.
 
@@ -190,7 +199,8 @@ Browser-Konsole:
 | Befehl | Wofür |
 |---|---|
 | `ML.shiftDays(1)` | einen Tag weiter (nur in diesem Tab) |
-| `ML.tag()` | Phase, Mission, Einstufung, Lernschritte, Wiederholungen, Extra, Papier, Zielstand, `nurPapier` |
+| `ML.tag()` | Phase, Mission, Einstufung, Lernschritte, Wiederholungen, Extra, Papier, Zielstand, `nurPapier`, `lsIds`, `faktor` |
+| `ML.eichung()` | Eichfaktor (ml-v3): echte und geschätzte Sekunden je Tag, Rohwert, Faktor nach der Begrenzung |
 | `ML.gen('vb-regeln', 5)` · `ML.check('vb-regeln', '17', 5)` | Aufgabe mit Seed erzeugen · Antwort prüfen |
 | `ML.setze({ 'vb-regeln': 2 })` | Stufen setzen, fällig heute (nur zum Testen) |
 | `ML.ziel()` · `ML.daten()` · `ML.ses` | Zielstand · geladene Daten und Fehler darin · laufende Runde |
@@ -245,8 +255,21 @@ Platzhaltern und der Test-Probe aus `tools/test/`, zuletzt mit den echten Typen 
   zeigt „Im Plan ✓“. **Fall 2** Installation Do: Do „Pause“, Fr/Sa Gelb „Der Plan ist knapp: 60 % sicher“, So Rot
   „hinter dem Plan“ (Prognose 38 %); die Plan-Karte zeigt jeden Abend „Im Plan ✓“. Probetag im Protokoll als fertig
 
-Noch nicht: iOS-Simulator und echtes iPhone (Tippen auf die Striche, sichere Ränder, Home-Bildschirm-App), Update von
-`ml-v1` auf `ml-v2` mit Service Worker.
+- `ml-v3` (19.11., `technik`, Browser-Pane 393 × 852 und 375 × 667, mit Testständen):
+  Rest-Eingabe in Runde, ② (auch im 2. Versuch) und Probe – leeres Rest-Feld: keine Wertung, Sprung ins Rest-Feld, Frage über
+  dem Ziffernfeld; 0 eingetippt gilt; zweistelliger Rest; Rest-Feld direkt angetippt; „nicht möglich“ ohne Rest (Probe 8b).
+  Lücke in Zahlen gemessen (Aufgabe, ②-Liste, Antwortzeile, Lösungsweg, Probe-Auswertung, Term-Eingabe, Dreierpack);
+  Rechenspalten (Probe 8c, 8d, erzeugte Divisionen und Multiplikationen) auf 0,1 px im Raster, bei 393 und 375 px. Fr: erst die nie gelernten Typen, dann Lücken;
+  ② bleibt nach der Runde so groß wie in der Mission; Sa und So wählen dasselbe wie ml-v2 (nur die Minuten mit Faktor). Tag schon von ml-v2 festgelegt:
+  ohne gespielte Runde neu gerechnet, sonst weiter wie dort. Altstand ohne Verlust (f, papier, stats, plaene, settings, ui,
+  log), Code hin und zurück gleich, Prüfskript ohne FEHLER (mit Namens-Check). Spieler `tools/test/helfer-test.js` tippt den
+  Rest jetzt immer (auch R 0; „nicht möglich“ falsch als 1 R 0) – Kopien des Treibers von `pruefung` brauchen dieselbe Änderung.
+
+- `ml-v3`, Prüfung (19.11., `pruefung`): **Chromium** – Update von `ml-v2` mit Service Worker ohne Verlust (vor dem ersten
+  Öffnen am Tag, Tag schon festgelegt, Runde schon begonnen), offline, Grenzfälle der Rest-Prüfung. **iOS-Safari im Simulator**
+  – Update mit Vergleich des Stands, Lücke in Zahlen gemessen, Rest-Felder mit Antippen, Hinweis geg/ges bei 375 px (emuliert).
+
+Noch nicht: echtes iPhone (Tippen auf die Striche, sichere Ränder, Home-Bildschirm-App).
 
 ## Icons neu erzeugen
 

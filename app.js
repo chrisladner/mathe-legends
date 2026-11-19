@@ -17,7 +17,7 @@ const APP_NAME = 'Mathe Legends';
 const APP_ID = 'ml';                    // Legends HQ: Lagebericht und Sicherung (/^[a-z]{2,8}$/)
 const STORE_KEY = 'mathelegends.v1';    // Speicher des Fortschritts – nie ändern
 const CODE_PREFIX = 'ML1:';             // Sicherungs-Code (werkzeuge/lernstand.mjs)
-const VERSION = 'ml-v2';                // wie VERSION in sw.js – immer beide zusammen hochzählen
+const VERSION = 'ml-v3';                // wie VERSION in sw.js – immer beide zusammen hochzählen
 const DAY_KEY = 'ml.dayOffset';         // sessionStorage: Zeitsprung zum Testen (ML.shiftDays)
 const WEEKDAYS = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag'];
 const DAY_SHORT = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
@@ -55,6 +55,9 @@ const MODELL = {
   // Tagesdeckel (Projektleitung 16.11., Prüfung Runde 1): geschätzte Minuten aus Einstufungsrest, Lernschritten, Fälligen,
   // ② und Extra höchstens 30 (Rahmen der Eltern)
   deckelMin: 30,
+  // Eichung (ml-v3, Projektleitung 19.11.): Die Sekunden der App-Teile im Deckel mal Faktor echt/geschätzt der letzten
+  // Übungstage (log), begrenzt. Heft, Eintippen und Beispiel bleiben geschätzt. Unter mindestSek Schätzung: Faktor 1.
+  eichung: { tage: 3, rueckblick: 7, min: 0.75, max: 1.3, mindestSek: 10 * 60 },
   kalender: { neuLetzter: -3, extraAb: -3, pruefTag: -2, lueckenTag: -1 },   // relativ zum Testtag: neue Lernschritte bis
                                                                         // Fr (Überlauf), Extra ab Fr, Sa prüft alle (Probe),
                                                                         // So nur Lücken und Probe-Fehler
@@ -171,6 +174,11 @@ function sekAnzeige(id) {
   const t = TYP[id];
   return t && !S.f[id] && Number(t.sekNeu) > 0 ? Number(t.sekNeu) : sekVon(id);
 }
+function sekNeuVon(id) { const t = TYP[id]; return t && Number(t.sekNeu) > 0 ? Number(t.sekNeu) : sekVon(id); }
+// Aufgaben der Runde im Tagesdeckel (ml-v3): geschätzt mal Eichfaktor – nur, was die App misst, nie das Heft
+function sekRunde(id) { return sekVon(id) * eichFaktor(); }
+function sekRundeAnzeige(id) { return sekAnzeige(id) * eichFaktor(); }
+const WDH_MITTEL = ZIEL_APP.length ? ZIEL_APP.reduce((a, id) => a + sekVon(id), 0) / ZIEL_APP.length : MODELL.sek.aufgabe;
 const F = MATHE ? MATHE.format : (n => String(n));
 
 // ================================================================
@@ -216,7 +224,8 @@ function clock() {
 // day = heute: ls (Lernschritte beendet), lsQuote (neue Lernschritte des Tages, einmal festgelegt), estop (Einstufung für heute
 //     beendet: 12 Minuten erreicht), esek (Sekunden Einstufung heute), en (Aufgaben der Einstufung heute: zählen bei
 //     der 40-%-Grenze als nicht geblockt), r (Antworten in einer Runde heute: Ist die Runde leer und r 0, zeigt die
-//     Mission nur ②), xSek (Platz für Extra im Tagesdeckel, einmal festgelegt)
+//     Mission nur ②), xSek (Platz für Extra im Tagesdeckel, einmal festgelegt), lsIds (ml-v3: die Lernschritte des Tages,
+//     neue und Lücken, einmal festgelegt; null = noch nicht), pSek (ml-v3: Platz für ② am Überlauf-Tag, mit lsIds festgelegt)
 // ui.start = Tag des ersten Starts (test.seit) · ui.e1 = Tag, an dem die Einstufung begann · ui.bereit / ui.perfekt
 // log = Tagesprotokoll für Plan-Karte und Lagebericht { 'JJJJ-MM-TT': { a, r, n, s, f, o, k } }, höchstens 90 Tage
 // plaene = eingefrorener Plan je Termin (LegendsStatus.bericht, erst nach der Einstufung)
@@ -228,7 +237,7 @@ function fresh() {
     f: {},
     papier: {},
     stats: { answers: 0, right: 0, sessions: 0, lastDay: '', streak: 0, best: 0 },
-    day: { date: '', ls: 0, lsQuote: -1, estop: 0, esek: 0, en: 0, r: 0, xSek: -1 },
+    day: { date: '', ls: 0, lsQuote: -1, estop: 0, esek: 0, en: 0, r: 0, xSek: -1, lsIds: null, pSek: -1 },
     ui: { hideInstall: false, onboarded: false, start: '', e1: '', bereit: '', perfekt: '', neues: '' },
     log: {},
     plaene: {}
@@ -486,10 +495,11 @@ function tagFrisch() {
   nachsichtAufraeumen();
 }
 // Schätzung je Lernschritt: Beispiel + ca. 5 Aufgaben, je Aufgabe die Sekunden des Typs (mindestens die eines
-// Lernschritts). Papier-Typ: kurz, Beispiel + 1 Aufgabe (erster richtiger Versuch: sekNeu).
+// Lernschritts). Papier-Typ: kurz, Beispiel + 1 Aufgabe (erster richtiger Versuch: sekNeu). Die Aufgaben in der App mit
+// Eichfaktor (ml-v3); das Beispiel (Lesen) und der kurze Papier-Lernschritt (gerechnet wird im Heft) ohne.
 function lsSek(id) {
   if (istPapierTyp(id)) return MODELL.sek.beispiel + (Number(TYP[id].sekNeu) || sekVon(id));
-  return MODELL.sek.beispiel + MODELL.lernschritt.schaetzung * Math.max(MODELL.sek.lernschritt, sekVon(id));
+  return MODELL.sek.beispiel + MODELL.lernschritt.schaetzung * Math.max(MODELL.sek.lernschritt, sekVon(id)) * eichFaktor();
 }
 const LS_TYPISCH = MODELL.sek.beispiel + MODELL.lernschritt.schaetzung * MODELL.sek.lernschritt;   // Vorschau vor der Einstufung
 const DECKEL = MODELL.deckelMin * 60;
@@ -518,56 +528,128 @@ function einstufungOffen() {
 // ================================================================
 // Tagesdeckel (Prüfung Runde 1, B1; Projektleitung 16.11.): Einstufungsrest + Lernschritte + Fällige + ② + Extra höchstens
 // 30 Min., geschätzt wie in der Anzeige (erster Kontakt sekNeu, Lernschritt Beispiel + ca. 5 Aufgaben, Papier-Typ kurz,
-// ② mit Eintippen). Was nicht passt, rutscht auf den nächsten Tag – zuerst neue Lernschritte, dann Extra. Einstufung
-// (höchstens 12 Min.), Lücken, Fällige und ② bleiben. Am letzten Tag für Neues (Fr, Überlauf) gilt die Obergrenze 8
-// nicht, und ② und Extra werden zuerst kleiner; was auch dann nicht passt, bleibt neu (die Probe am Sa kann es auf ⅓
-// heben). Sa/So keine neuen Lernschritte, nur Lücken.
-// Die Mengen werden einmal am Tag festgelegt (S.day.lsQuote, S.day.xSek): Wer die Runde neu startet, bekommt nicht
-// noch einmal neue.
+// ② mit Eintippen). Was nicht passt, rutscht auf den nächsten Tag – zuerst Lernschritte, dann Extra. Einstufung
+// (höchstens 12 Min.), Fällige und ② bleiben. Am letzten Tag für Neues (Fr, Überlauf) gilt die Obergrenze 8 nicht, und
+// ② und Extra werden zuerst kleiner; was auch dann nicht passt, bleibt neu (die Probe am Sa kann es auf ⅓ heben). Sa/So
+// keine neuen Lernschritte, nur Lücken (alle, in der Runde).
+// ml-v3 (Projektleitung 19.11.): Typen, die noch nie einen Lernschritt hatten, kommen vor den Lernschritten für Lücken
+// (vorher: Lücken immer zuerst und ohne Deckel – dann blieb für Neues oft kaum Platz). Der Deckel rechnet die
+// App-Teile mit dem Eichfaktor aus den echten Sekunden der letzten Tage.
+// Die Auswahl wird einmal am Tag festgelegt (S.day.lsIds, S.day.xSek): Wer die Runde neu startet, bekommt nicht noch
+// einmal neue.
 // ================================================================
 function istLetzterNeuTag() { const k = kalTag(MODELL.kalender.neuLetzter); return !!k && today() >= k; }
 function istEinstufungsTag() { return !S.ui.e1 || S.ui.e1 === today(); }
-// Kandidaten: offene Lücken (Mi–Fr ab dem Tag nach dem Fund, Sa/So gleich) und Typen auf Stufe 0 (nicht an Sa/So)
+// Kandidaten: offene Lücken (Mi–Fr ab dem Tag nach dem Fund, Sa/So gleich) und Typen auf Stufe 0 (nicht an Sa/So).
+// Stufe 0: zuerst die, die noch nie einen Lernschritt hatten (kein ls), dann die nach „morgen mit Hilfe“; je nach lernFolge.
 function lsKandidaten() {
   const t = today(), ph = phase();
   const heuteVersucht = id => S.f[id].ls === t;
   const luecken = ZIEL.filter(id => { const s = S.f[id]; return s && s.lk && !heuteVersucht(id) && (s.lk < t || ruhePhase()); });
   const neu = ruhePhase() || ph === 'testtag' ? []
-    : ZIEL.filter(id => { const s = S.f[id]; return s && s.lv === 0 && !s.lk && !heuteVersucht(id); }).sort(lernFolge);
+    : ZIEL.filter(id => { const s = S.f[id]; return s && s.lv === 0 && !s.lk && !heuteVersucht(id); })
+      .sort((a, b) => ((S.f[a].ls ? 1 : 0) - (S.f[b].ls ? 1 : 0)) || lernFolge(a, b));
   return { luecken, neu };
 }
 function sekSumme(ids, f) { return ids.reduce((a, id) => a + f(id), 0); }
 function einstRestSek(einst) {
   const rest = Math.max(0, MODELL.einstufung.maxSek - (S.day.date === today() ? S.day.esek : 0));
-  return Math.min(rest, sekSumme(einst, id => einstufungFragen(id) * sekAnzeige(id)));
+  return Math.min(rest, sekSumme(einst, id => einstufungFragen(id) * sekRundeAnzeige(id)));
 }
-// Wie viele neue Lernschritte heute (ohne Lücken). basisSek = Gemachtes und alles andere, was heute noch ansteht.
-function lsMenge(neu, luecken, basisSek) {
-  const ph = phase(), L = MODELL.lernschritte;
-  if (ph === 'frei') return Math.min(L.ersterTag, neu.length);
-  if (ph !== 'lernen') return 0;
-  // Fr (letzter Tag für Neues, Überlauf): keine Obergrenze 8, aber auch hier der Deckel – ② wird dafür vorher kleiner
-  // (papierTypenHeute rechnet am Fr mit allen übrigen Lernschritten)
-  const max = istLetzterNeuTag() ? neu.length : Math.min(istEinstufungsTag() ? L.ersterTag : L.folgetag, neu.length);
-  let frei = DECKEL - basisSek - sekSumme(luecken, lsSek), q = 0;
-  for (const id of neu.slice(0, max)) { if (lsSek(id) > frei) break; q++; frei -= lsSek(id); }
-  return q;
+// Auswahl für heute (ml-v3). basisSek = Gemachtes und alles andere, was heute noch ansteht. Reihenfolge: neue Typen (s. o.),
+// dann Lücken – jeder, solange er in den Deckel passt. Passt einer nicht, kommt der nächste dran (am Fr so viele wie
+// möglich, Projektleitung 19.11.); ein Typ, dessen Voraussetzung noch neu ist und heute nicht drankommt, wartet.
+// Obergrenze für neue: am Tag der Einstufung 2, sonst 8, am letzten Tag für Neues (Fr) keine. Lücken, die nicht mehr passen,
+// kommen am nächsten Tag (Sa/So in der Runde). Ohne Termin wie bisher: 2 neue und alle Lücken.
+function lsAuswahl(neu, luecken, basisSek) {
+  const L = MODELL.lernschritte;
+  if (phase() === 'frei') return [...neu.slice(0, L.ersterTag), ...luecken];
+  const max = istLetzterNeuTag() ? Infinity : istEinstufungsTag() ? L.ersterTag : L.folgetag;
+  const out = [];
+  let frei = DECKEL - basisSek, n = 0;
+  const passt = id => { const s = lsSek(id); if (s > frei) return false; out.push(id); frei -= s; return true; };
+  for (const id of neu) {
+    if (n >= max) break;
+    const wartet = ((TYP[id] && TYP[id].voraus) || []).some(v => S.f[v] && S.f[v].lv === 0 && !out.includes(v));
+    if (!wartet && passt(id)) n++;
+  }
+  for (const id of luecken) passt(id);
+  return out;
 }
 function lernschritteHeute(basisSek = 0) {
   tagFrisch();
   if (phase() === 'testtag') return [];
   const { luecken, neu } = lsKandidaten();
-  if (S.day.lsQuote < 0) S.day.lsQuote = lsMenge(neu, luecken, basisSek);
-  return [...luecken, ...neu.slice(0, Math.max(0, S.day.lsQuote - S.day.ls))];
+  if (ruhePhase()) return luecken;   // Sa/So: alle Lücken, keine neuen (Teil A)
+  if (!Array.isArray(S.day.lsIds)) {
+    if (S.day.lsQuote >= 0 && S.day.r) {
+      // Heute hat schon ml-v2 festgelegt, und die Runde läuft: so weiter wie dort (alle Lücken, dazu die ersten neuen)
+      S.day.lsIds = [...luecken, ...neu.slice(0, Math.max(0, S.day.lsQuote - S.day.ls))];
+    } else {
+      // Neu festlegen – auch wenn ml-v2 heute schon gerechnet hat, aber noch keine Runde gespielt ist (Update am selben Tag)
+      if (S.day.lsQuote >= 0) S.day.xSek = -1;
+      S.day.lsIds = lsAuswahl(neu, luecken, basisSek);
+      S.day.lsQuote = S.day.lsIds.filter(id => !S.f[id].lk).length;
+      // Überlauf-Tag (Fr): ② bekommt, was die Lernschritte übrig lassen – gleich mit festgelegt. Sonst wüchse ② nach der Runde:
+      // Die echten Sekunden (ohne Lesen, je Aufgabe höchstens 60) sind oft kleiner als die Schätzung, und aus „1 Aufgabe ins
+      // Heft“ würden nach der Runde vier.
+      if (istLetzterNeuTag()) S.day.pSek = Math.max(0, DECKEL - andereSekHeute());
+    }
+  }
+  const offen = new Set([...neu, ...luecken]);
+  return S.day.lsIds.filter(id => offen.has(id));
 }
 // Was heute außer ② und Extra noch ansteht oder schon gemacht ist (für den Überlauf-Tag): Gemachtes, Einstufungsrest,
-// Lernschritte (solange die Menge nicht festgelegt ist: alle übrigen – dann bleibt ② klein), Fällige
+// Lernschritte (solange die Auswahl nicht festgelegt ist: alle Kandidaten – dann bleibt ② klein), Fällige
 function andereSekHeute() {
   const { luecken, neu } = lsKandidaten();
-  const ls = [...luecken, ...neu.slice(0, S.day.lsQuote >= 0 ? Math.max(0, S.day.lsQuote - S.day.ls) : neu.length)];
+  const offen = new Set([...neu, ...luecken]);
+  const ls = Array.isArray(S.day.lsIds) && !ruhePhase() ? S.day.lsIds.filter(id => offen.has(id)) : [...neu, ...luecken];
   const wdh = ZIEL_APP.filter(id => istFaellig(id) && !ls.includes(id));
-  return heuteSek() + einstRestSek(einstufungOffen()) + sekSumme(ls, lsSek) + sekSumme(wdh, sekVon);
+  return heuteSek() + einstRestSek(einstufungOffen()) + sekSumme(ls, lsSek) + sekSumme(wdh, sekRunde);
 }
+// ---------- Eichung (ml-v3, Projektleitung 19.11.) ----------
+// Wie schnell ist das Kind in der App wirklich? Faktor = echte Sekunden (log.s) gegen die Schätzung derselben Arbeit, über
+// die letzten 3 Übungstage. log.s misst je Aufgabe die Zeit vom Zeigen bis zur Antwort (höchstens 60 s) – nicht das Rechnen
+// im Heft und nicht das Lesen von Beispiel und Rückmeldung. Darum vergleicht die Eichung nur App-Aufgaben mit App-Aufgaben,
+// und der Faktor gilt nur für sie (Wiederholungen, Aufgaben im Lernschritt, Einstufungsrest, Extra). Heft, Eintippen, das
+// Beispiel und die Grenzen 12 Min. (Einstufung, ②) und 5 Min. (Extra) bleiben, wie sie sind.
+// Welche Typen damals dran waren, steht nicht mehr im Speicher. Die Schätzung eines Tages kommt darum aus dem, was bleibt:
+//   Einstufung: Typen mit erstem Kontakt an dem Tag (since, ohne cx), je Aufgabe sekNeu
+//   Papier: jeder Versuch auf dem ②-Blatt 15 s (Eintippen); der erste Kontakt eines Papier-Typs ist eines der n des Tages
+//   Lernschritte: die übrigen n des Tages, je 5 Aufgaben à 40 s (wie lsSek, ohne Beispiel)
+//   Wiederholungen: a ohne die gezählten Papier-Ergebnisse, je das Mittel von sek der App-Typen
+// Zwillinge und zweite Versuche stehen nur in log.s: Der Faktor wird dadurch eher größer (vorsichtiger). Ohne Probetag.
+function tagSchaetzung(d) {
+  const e = S.log[d] || {};
+  const am = id => !!S.f[id] && S.f[id].since === d;
+  const einst = ZIEL_APP.filter(id => am(id) && !S.f[id].cx);
+  const extra = EXTRA.filter(am);
+  const blatt = S.papier['p-' + d];
+  const items = blatt && Array.isArray(blatt.items) ? blatt.items : [];
+  const erg = (blatt && blatt.erg) || {};
+  const versuche = items.reduce((a, x) => a + ((erg[x.nr] && erg[x.nr].v) || 0), 0);
+  // Erster Versuch in a gezählt, wenn der Typ schon vorher da war und fällig sein konnte (nicht auf 0, keine Lücke danach)
+  const gezaehlt = items.filter(x => { const s = S.f[x.typ]; return s && erg[x.nr] && s.since < d && s.lv > 0 && !(s.ls && s.ls > d); }).length;
+  const ls = Math.max(0, (e.n || 0) - einst.length - ZIEL_PAPIER.filter(am).length - extra.length);
+  const wdh = Math.max(0, (e.a || 0) - gezaehlt);
+  return sekSumme(einst, id => einstufungFragen(id) * sekNeuVon(id)) + sekSumme(extra, sekNeuVon)
+    + ls * MODELL.lernschritt.schaetzung * MODELL.sek.lernschritt + wdh * WDH_MITTEL + versuche * MODELL.sek.eintippen;
+}
+let eichMemo = null;   // { key, faktor, roh, tage } – ändert sich nur mit dem Tag oder dem Speicher
+function eichung() {
+  const key = today() + '|' + saveCount;
+  if (eichMemo && eichMemo.key === key) return eichMemo;
+  const E = MODELL.eichung, t = today();
+  const probeTage = new Set(Object.values(S.papier).filter(b => b && b.probe && isDay(b.tag)).map(b => b.tag));
+  const tage = Object.keys(S.log).filter(d => isDay(d) && d < t && d >= addDays(t, -E.rueckblick) && !probeTage.has(d) && (S.log[d].s || 0) > 0)
+    .sort().slice(-E.tage).map(d => ({ d, echt: S.log[d].s, schaetzung: Math.round(tagSchaetzung(d)) })).filter(x => x.schaetzung > 0);
+  const echt = sekSumme(tage, x => x.echt), schaetzung = sekSumme(tage, x => x.schaetzung);
+  const roh = schaetzung >= E.mindestSek ? echt / schaetzung : 1;
+  eichMemo = { key, faktor: Math.round(Math.min(E.max, Math.max(E.min, roh)) * 100) / 100, roh: Math.round(roh * 1000) / 1000, echt, schaetzung, tage };
+  return eichMemo;
+}
+function eichFaktor() { return eichung().faktor; }
 // ② von heute für den Tagesdeckel: Heft (wie angezeigt) und Eintippen
 function papierHeuteSek() {
   const pi = papierInfo();
@@ -582,7 +664,7 @@ function extraHeute(restSek = MODELL.extraMaxSek) {
   const kandidaten = [...EXTRA.filter(id => !S.f[id]), ...EXTRA.filter(id => S.f[id] && istFaellig(id)).sort(urgency)];
   const out = [];
   let sek = 0;
-  for (const id of kandidaten) { if (sek + sekAnzeige(id) > S.day.xSek) break; out.push(id); sek += sekAnzeige(id); }
+  for (const id of kandidaten) { if (sek + sekRundeAnzeige(id) > S.day.xSek) break; out.push(id); sek += sekRundeAnzeige(id); }
   return out;
 }
 function tagesPlan() {
@@ -605,7 +687,7 @@ function tagesPlan() {
   p.einstufung = einstufungOffen();
   p.wdh = ZIEL_APP.filter(istFaellig).sort(urgency);
   const einstSek = einstRestSek(p.einstufung);
-  const wdhSek = () => sekSumme(p.wdh, sekVon);
+  const wdhSek = () => sekSumme(p.wdh, sekRunde);
   let lsVorschau = 0;
   if (!p.einstufung.length) {
     // Lernschritte erst nach der Einstufung festlegen: Welche Typen auf 0 stehen, zeigt erst sie. Der Deckel rechnet mit
@@ -626,8 +708,9 @@ function tagesPlan() {
     const geschaetzt = Math.max(0, Math.min(max - bekannt.length, p.einstufung.length)) * LS_TYPISCH;
     lsVorschau = Math.max(0, Math.min(sekSumme([...luecken, ...bekannt], lsSek) + geschaetzt, DECKEL - basis));
   }
+  // Minuten der Mission = dieselben wie im Deckel (App-Teile geeicht); ② steht mit eigenen Minuten daneben
   p.sek = einstSek + sekSumme(p.lernschritte, lsSek) + lsVorschau + wdhSek();
-  p.extraSek = sekSumme(p.extra, sekAnzeige);
+  p.extraSek = sekSumme(p.extra, sekRundeAnzeige);
   return p;
 }
 // ① ist offen, solange Einstufung, Lernschritte oder Wiederholungen fehlen (Extra gehört nicht zur Mission)
@@ -671,7 +754,8 @@ function papierTypenHeute() {
   // was neben den übrigen Lernschritten im Tagesdeckel Platz hat (mit Eintippen). Die Textaufgabe zuerst, dann die
   // Rechnungen der Reihe nach, solange sie passen.
   const maxHeft = (Number(PAP.maxMin) || MODELL.papierMaxSek / 60) * 60;
-  const maxGesamt = ph === 'lernen' && istLetzterNeuTag() ? DECKEL - andereSekHeute() : Infinity;
+  const maxGesamt = ph !== 'lernen' || !istLetzterNeuTag() ? Infinity
+    : S.day.date === today() && S.day.pSek >= 0 ? S.day.pSek : DECKEL - andereSekHeute();
   let heft = 0, gesamt = 0;
   const passt = id => heft + sekAnzeige(id) <= maxHeft && gesamt + sekAnzeige(id) + MODELL.sek.eintippen <= maxGesamt;
   const nimm = id => { heft += sekAnzeige(id); gesamt += sekAnzeige(id) + MODELL.sek.eintippen; return true; };
@@ -839,6 +923,13 @@ function sfx(kind) {
 function esc(s) {
   return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+// Zahlen wie im Buch (ml-v3): aufgaben.js trennt Dreiergruppen mit einem festen Leerzeichen (U+00A0). In der Anzeige kommt
+// es in eine eigene Spanne (.zl in styles.css: schmal, ohne word-spacing); die normalen Leerzeichen um + − · : = bleiben
+// breit. Vorher machte word-spacing beide gleich breit, und eine große Zahl sah aus wie zwei. Das
+// Leerzeichen bleibt in der Spanne: Mit einer alten styles.css sieht es aus wie bisher. Bekommt fertiges HTML (escapt);
+// Ziffern dürfen in <u> oder <mark> stehen. Nie für Attribute, SVG-Text oder die Rechenspalte (feste Schrift: Spalten).
+const ZL_RE = /(\d(?:<\/(?:u|mark)>)?)\u00a0(?=(?:<(?:u|mark)>)?\d)/g;
+function zl(html) { return String(html).replace(ZL_RE, '$1<span class="zl">\u00a0</span>'); }
 function restartAnim(el, cls) { if (!el) return; el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
 function shake(el) { restartAnim(el, 'shake'); }
 function topbar(title, back = 'home') {
@@ -1284,8 +1375,10 @@ function papierScreen() {
   const liste = b.items.map(a => {
     const e = b.erg[a.nr];
     const status = e && (e.ok || e.v >= 2) ? `<span class="pstatus ok">✓</span>` : '';
-    const text = PAPIER_TEXT.has(a.typ) || !a.term ? `<span class="ptext">${umbruch(esc(a.text || ''))}</span>` : '';
-    return `<li class="paufgabe"><span class="pnr">${esc(a.nr)})</span><span class="pinhalt">${text}${a.term ? `<span class="pterm">${umbruch(esc(a.term))}</span>` : ''}</span>${status}</li>`;
+    const text = PAPIER_TEXT.has(a.typ) || !a.term ? `<span class="ptext">${zl(umbruch(esc(a.text || '')))}</span>` : '';
+    // Textaufgabe: der Auftrag wie in der Schularbeit direkt bei der Aufgabe (nur im Kleingedruckten unten ist er leicht zu überlesen)
+    const hinweis = PAPIER_TEXT.has(a.typ) ? `<span class="phinweis">Schreib geg:, ges:, die Rechnung und A:.</span>` : "";
+    return `<li class="paufgabe"><span class="pnr">${esc(a.nr)})</span><span class="pinhalt">${text}${hinweis}${a.term ? `<span class="pterm">${zl(umbruch(esc(a.term)))}</span>` : ''}</span>${status}</li>`;
   }).join('');
   const angefangen = Object.keys(b.erg).length > 0;
   const mitText = b.items.some(a => PAPIER_TEXT.has(a.typ));
@@ -1614,14 +1707,14 @@ function umbruch(html) {
 function aufgabeHTML(a) {
   const lang = a.text && a.text.length > 160 ? ' lang' : '';
   const wort = /[A-Za-zÄÖÜäöüß]{12,}/.test(a.term || '') ? ' wort' : '';
-  return `${a.text ? `<p class="atext${lang}">${umbruch(esc(a.text))}</p>` : ''}${a.bild ? bildHTML(a) : ''}${a.term ? `<p class="q${wort}">${umbruch(esc(a.term))}</p>` : ''}`;
+  return `${a.text ? `<p class="atext${lang}">${zl(umbruch(esc(a.text)))}</p>` : ''}${a.bild ? bildHTML(a) : ''}${a.term ? `<p class="q${wort}">${zl(umbruch(esc(a.term)))}</p>` : ''}`;
 }
 // Lösungsweg: Textzeilen; _so_ wird unterstrichen (erste Teilzahl der Division, wie im Heft); { mono: [Zeilen] } ist
 // eine Rechnung in fester Schrift, Leerzeichen bleiben (Kurzform der Division, Spalten). Zahlen setzt der Generator.
 function unterstrichen(html) { return html.replace(/_([^_]+)_/g, '<u>$1</u>'); }
 function wegZeile(z) {
   if (z && typeof z === 'object' && Array.isArray(z.mono)) return `<pre class="rechnung">${z.mono.map(l => unterstrichen(esc(l))).join('\n')}</pre>`;
-  return unterstrichen(umbruch(esc(z == null ? '' : z)));
+  return zl(unterstrichen(umbruch(esc(z == null ? '' : z))));
 }
 function wegHTML(weg) {
   if (!Array.isArray(weg) || !weg.length) return '';
@@ -1676,8 +1769,8 @@ function loesungText(a) {
 // nach an, die App setzt die Zeichen (< bzw. >). Eine gesetzte Zahl antippen nimmt sie wieder heraus.
 function ordnenHTML(a) {
   const zeichen = a.richtung === 'ab' ? '>' : '<';
-  const kette = SES.ordnung.map((i, k) => `${k ? `<span class="oz">${zeichen}</span>` : ''}<button type="button" class="ochip gesetzt" data-act="oraus" data-i="${i}">${esc(F(a.zahlen[i]))}</button>`).join('');
-  const rest = a.zahlen.map((z, i) => (SES.ordnung.includes(i) ? '' : `<button type="button" class="ochip" data-act="orein" data-i="${i}">${esc(F(z))}</button>`)).join('');
+  const kette = SES.ordnung.map((i, k) => `${k ? `<span class="oz">${zeichen}</span>` : ''}<button type="button" class="ochip gesetzt" data-act="oraus" data-i="${i}">${zl(esc(F(a.zahlen[i])))}</button>`).join('');
+  const rest = a.zahlen.map((z, i) => (SES.ordnung.includes(i) ? '' : `<button type="button" class="ochip" data-act="orein" data-i="${i}">${zl(esc(F(z)))}</button>`)).join('');
   return `<div class="okette" aria-label="deine Reihe">${kette || '<span class="leer">Tipp die Zahlen der Reihe nach an.</span>'}</div><div class="opool">${rest}</div>`;
 }
 function ordnenTippen(b, rein) {
@@ -1701,6 +1794,12 @@ function pruefeLokal(a, wert) {
   const w = wert.map(Number).sort((x, y) => x - y), s = l.slice().sort((x, y) => x - y);
   return { ok: w.length === s.length && w.every((x, k) => x === s[k]), wert };
 }
+// Eingabe in der Karte: die Felder (#anz) und bei Rest-Aufgaben die Frage nach dem Rest (ml-v3, erst nach „Prüfen“ mit
+// leerem Rest-Feld zu sehen)
+function eingabeZeileHTML(a) {
+  return '<div class="anz-zeile"><output class="anz" id="anz" aria-live="polite"></output></div>'
+    + ((a.eingabe || 'zahl') === 'rest' ? '<p class="rest-frage" id="rest-frage" role="status" hidden>Und der Rest? Tippe 0, wenn keiner bleibt.</p>' : '');
+}
 // Knopf rechts im Band: „Weiß ich noch nicht“ (Einstufung) oder „Tipp“ (zeigt den ersten Schritt; dann kein Aufstieg)
 function toolHTML(a, c) {
   if (c.art === 'einstufung') return '<button type="button" class="tool" data-act="weissNicht">Weiß ich noch nicht</button>';
@@ -1710,7 +1809,7 @@ function toolHTML(a, c) {
 // Ein Vergleich im Dreierpack: „45 678 ○ 45 687“ – das ○ zeigt die Wahl
 function vglTermHTML(x, mitte) {
   const [l, r] = String(x.term).split('○');
-  return `<div class="vgl-term"><span>${esc((l || '').trim())}</span>${mitte}<span>${esc((r || '').trim())}</span></div>`;
+  return `<div class="vgl-term"><span>${zl(esc((l || '').trim()))}</span>${mitte}<span>${zl(esc((r || '').trim()))}</span></div>`;
 }
 function renderAufgabe() {
   const c = SES.cur, a = SES.auf;
@@ -1726,10 +1825,10 @@ function renderAufgabe() {
     body = `${aufgabeHTML(a)}<div class="ordnen" id="ordnen">${ordnenHTML(a)}</div>`;
   } else if (a.eingabe === 'strahl') {
     const n = (a.ziel || a.loesung || []).length;
-    body = `${aufgabeHTML(a)}<p class="fineprint">Tipp ${n === 1 ? 'den Strich' : `die ${n} Striche`} an${a.ziel ? `: ${a.ziel.map(z => esc(F(z))).join(', ')}` : ''}. Nochmal antippen nimmt das Kreuz weg.</p>`;
+    body = `${aufgabeHTML(a)}<p class="fineprint">Tipp ${n === 1 ? 'den Strich' : `die ${n} Striche`} an${a.ziel ? `: ${a.ziel.map(z => zl(esc(F(z)))).join(', ')}` : ''}. Nochmal antippen nimmt das Kreuz weg.</p>`;
   } else {
     const schritt1 = c.art === 'ls' && c.schritt === 'eins' && a.weg && a.weg[0] ? `<div class="hilfe">1. Schritt: ${wegZeile(a.weg[0])}</div>` : '';
-    body = `${aufgabeHTML(a)}${schritt1}<div class="anz-zeile"><output class="anz" id="anz" aria-live="polite"></output></div><p class="tipp-zeile" id="tipp" hidden></p>`;
+    body = `${aufgabeHTML(a)}${schritt1}${eingabeZeileHTML(a)}<p class="tipp-zeile" id="tipp" hidden></p>`;
   }
   E.card.className = 'vcard pop';
   E.card.innerHTML = `${kopf || tool ? `<div class="band"><span>${esc(kopf)}</span>${tool}</div>` : ''}<div class="cbody">${body}</div>`;
@@ -1759,7 +1858,7 @@ function renderBeispiel() {
   E.card.className = 'vcard pop';
   E.card.innerHTML = `<div class="band rule">Neuer Trick: so geht’s</div><div class="cbody">${aufgabeHTML(a)}
     ${wegHTML(a.weg)}
-    <p class="answer-line">Ergebnis: <b>${esc(loesungText(a))}</b></p>
+    <p class="answer-line">Ergebnis: <b>${zl(esc(loesungText(a)))}</b></p>
     <p class="fineprint">Schau dir den Weg an. Gleich bist du dran.</p></div>`;
   E.pad.hidden = true;
   E.next.hidden = false;
@@ -1779,15 +1878,16 @@ function renderBeispiel() {
 const OPS = ['+', '−', '·', ':', '(', ')'];
 const KUERZEL = (MATHE && MATHE.KUERZEL) || ['Md', 'HM', 'ZM', 'M', 'HT', 'ZT', 'T', 'H', 'Z', 'E'];
 const MAX_ZIFFERN = 12;
+// Rest (ml-v3): zwei Felder mit Namen, beide antippbar; die Taste R springt ins Rest-Feld. frage = „Und der Rest?“ steht da
 function neueEingabe(a) {
   const art = a.eingabe || 'zahl';
   const feld = (fa, label = '') => ({ art: fa, label });
   let felder;
-  if (art === 'rest') felder = [feld('zahl'), feld('zahl', 'R')];
+  if (art === 'rest') felder = [feld('zahl', 'Ergebnis'), feld('zahl', 'Rest')];
   else if (art === 'felder') felder = (a.felder || []).map(f => feld(f.art || 'zahl', f.label || ''));
   else if (art === 'term' || art === 'kuerzel') felder = [feld(art)];
   else felder = [feld('zahl')];
-  return { art, felder, werte: felder.map(() => ''), i: 0, nm: false, dyn: art === 'liste' };
+  return { art, felder, werte: felder.map(() => ''), i: 0, nm: false, dyn: art === 'liste', frage: false };
 }
 function padHTML(a) {
   if (Array.isArray(a) || a.eingabe === 'ordnen' || a.eingabe === 'strahl') return '<button type="button" class="key go breit" data-act="taste" data-k="ok">Prüfen</button>';
@@ -1884,11 +1984,13 @@ function feldWahl(b) {
   const i = +b.dataset.i;
   if (i >= 0 && i < SES.ein.felder.length) { SES.ein.i = i; zeigeEingabe(); }
 }
+// Feldinhalt als HTML. Beim Term bleibt das feste Leerzeichen in der Zahl stehen (nur normale Leerzeichen zusammenfassen),
+// sonst wäre die Lücke in „1 000“ so breit wie um das Plus
 function feldText(fa, w) {
   if (!w) return '';
-  if (fa === 'term') return esc(w.replace(/\d+/g, n => F(n)).replace(/([+−·:])/g, ' $1 ').replace(/\s+/g, ' ').trim());
+  if (fa === 'term') return zl(esc(w.replace(/\d+/g, n => F(n)).replace(/([+−·:])/g, ' $1 ').replace(/ +/g, ' ').trim()));
   if (fa === 'kuerzel') return esc(w);
-  return F(w);
+  return zl(F(w));
 }
 function zeigeEingabe() {
   const el = $('#anz');
@@ -1896,15 +1998,16 @@ function zeigeEingabe() {
   const e = SES.ein;
   let html;
   if (e.nm) html = '<span class="nm">nicht möglich</span>';
-  else if (e.art === 'rest') {
-    html = `<span class="${e.i === 0 ? 'akt' : ''}">${feldText('zahl', e.werte[0]) || '?'}</span>${e.i === 1 || e.werte[1] ? ` <span class="rr">R</span> <span class="${e.i === 1 ? 'akt' : ''}">${feldText('zahl', e.werte[1]) || '?'}</span>` : ''}`;
-  } else if (e.felder.length > 1 || e.art === 'felder') {
-    // Mehrere Felder: je Feld Name und Wert, antippbar; die Liste ohne Namen, durch Beistriche getrennt
-    html = e.felder.map((f, i) => `<button type="button" class="feld${i === e.i ? ' akt' : ''}" data-act="feld" data-i="${i}">${f.label ? `<small>${esc(f.label)}</small>` : ''}<span>${feldText(f.art, e.werte[i]) || '?'}</span></button>`).join(e.art === 'liste' ? '<span class="komma">,</span>' : '');
+  else if (e.felder.length > 1 || e.art === 'felder') {
+    // Mehrere Felder: je Feld Name und Wert, antippbar; die Liste ohne Namen, durch Beistriche getrennt; Rest mit R dazwischen
+    const fuge = e.art === 'liste' ? '<span class="komma">,</span>' : e.art === 'rest' ? '<span class="rr" aria-hidden="true">R</span>' : '';
+    html = e.felder.map((f, i) => `<button type="button" class="feld${i === e.i ? ' akt' : ''}" data-act="feld" data-i="${i}">${f.label ? `<small>${esc(f.label)}</small>` : ''}<span>${feldText(f.art, e.werte[i]) || '?'}</span></button>`).join(fuge);
   } else html = feldText(e.felder[0].art, e.werte[0]);
   el.innerHTML = html || '<span class="leer">?</span>';
-  el.classList.toggle('mehr', e.felder.length > 1 && e.art !== 'rest');
+  el.classList.toggle('mehr', e.felder.length > 1);
   el.classList.toggle('viele', e.felder.length >= 3 && e.art === 'felder');   // H4: alle Felder über dem Ziffernfeld
+  const frage = $('#rest-frage');
+  if (frage) frage.hidden = !(e.frage && !e.nm && e.werte[1] === '');
   const extra = $('#extra');
   if (extra) { extra.innerHTML = extraHTML(); extra.hidden = !extra.innerHTML; }
   feldSichtbar(el.querySelector('.feld.akt'));
@@ -1924,7 +2027,7 @@ function eingabeWert() {
   if (SES.auf.eingabe === 'strahl') return SES.marken.length === (SES.auf.ziel || SES.auf.loesung || []).length ? SES.marken.slice() : null;
   const e = SES.ein;
   if (e.nm) return 'nm';
-  if (e.art === 'rest') return e.werte[0] === '' ? null : { q: e.werte[0], r: e.werte[1] === '' ? '0' : e.werte[1] };
+  if (e.art === 'rest') return e.werte[0] === '' || e.werte[1] === '' ? null : { q: e.werte[0], r: e.werte[1] };   // leer ist nie 0
   if (e.art === 'felder') return e.werte.some(w => w === '') ? null : e.werte.slice();
   if (e.art === 'liste') { const l = e.werte.filter(Boolean); return l.length ? l : null; }
   return e.werte[0] || null;
@@ -1959,6 +2062,19 @@ document.addEventListener('keydown', e => {
 // ---------- Prüfen und Folgen ----------
 function pruefen() {
   if (!SES || SES.phase !== 'answer') return;
+  // Rest-Aufgabe (ml-v3): Ein leeres Rest-Feld gilt nicht als 0. Nicht werten, sondern ins Rest-Feld springen und nach dem
+  // Rest fragen – in der Runde, in ② und in der Probe. Sonst würde ein vergessener Rest still als 0 gewertet.
+  // Mit „nicht möglich“ gibt es keinen Rest. Die Uhr der Aufgabe läuft weiter (taskSec erst unten).
+  const e = SES.ein;
+  if (e && e.art === 'rest' && !e.nm && (e.werte[0] === '' || e.werte[1] === '')) {
+    if (e.werte[0] === '') { e.i = 0; zeigeEingabe(); return sperre(); }
+    e.i = 1;
+    e.frage = true;
+    zeigeEingabe();
+    const frage = $('#rest-frage');
+    if (frage) { restartAnim(frage, 'pop'); feldSichtbar(frage); }
+    return;
+  }
   const wert = eingabeWert();
   if (wert == null) { shake(Array.isArray(SES.auf) || !$('#anz') ? E.card : $('#anz')); return; }
   const c = SES.cur, a = SES.auf;
@@ -2200,17 +2316,17 @@ function markiert(a, wert) {
   }
   return esc(loesungText(a));
 }
-function loesungHTML(a, wert) { return `<p class="answer-line">Richtig ist: <b class="loesung">${markiert(a, wert)}</b></p>`; }
+function loesungHTML(a, wert) { return `<p class="answer-line">Richtig ist: <b class="loesung">${zl(markiert(a, wert))}</b></p>`; }
 // Ordnen: die richtige Kette, Plätze markiert, an denen eine andere Zahl stand
 function ordnenLoesungHTML(a, r) {
   const zeichen = a.richtung === 'ab' ? ' > ' : ' < ';
-  return `<p class="answer-line">Richtig ist:</p><p class="okette loesung">${(a.loesung || []).map((z, k) => (r.positionen && r.positionen[k] && !r.positionen[k].ok ? `<mark>${esc(F(z))}</mark>` : esc(F(z)))).join(`<span class="oz">${zeichen.trim()}</span>`)}</p>`;
+  return `<p class="answer-line">Richtig ist:</p><p class="okette loesung">${(a.loesung || []).map((z, k) => (r.positionen && r.positionen[k] && !r.positionen[k].ok ? `<mark>${zl(esc(F(z)))}</mark>` : zl(esc(F(z))))).join(`<span class="oz">${zeichen.trim()}</span>`)}</p>`;
 }
 // Rückmeldung zur Fehlerart (Lernauftrag 2a, die Texte liefert aufgaben.js): pruefe() gibt hinweis zurück oder eine
 // fehlerart, deren Text in MATHE.fehlerTexte steht. Ohne Text bleibt es beim Lösungsweg.
 function hinweisHTML(r) {
   const t = (r && r.hinweis) || (r && r.fehlerart && MATHE && MATHE.fehlerTexte && MATHE.fehlerTexte[r.fehlerart]) || '';
-  return typeof t === 'string' && t ? `<p class="note hinweis">${esc(t)}</p>` : '';
+  return typeof t === 'string' && t ? `<p class="note hinweis">${zl(esc(t))}</p>` : '';
 }
 function renderFeedback(r, info) {
   const c = SES.cur, a = SES.auf;
@@ -2220,14 +2336,14 @@ function renderFeedback(r, info) {
     // Jede Zeile mit dem richtigen Zeichen: grün hinterlegt, wo es stimmte, gelb, wo nicht
     body = `<div class="vgl">${a.map((x, i) => `<div class="vgl-zeile ${r.teile[i].ok ? 'ok' : 'bad'}">${vglTermHTML(x, `<b class="vgl-erg">${esc(x.loesung)}</b>`)}</div>`).join('')}</div>`;
   } else if (!r.ok && a.eingabe === 'ordnen') body = ordnenLoesungHTML(a, r);
-  else if (!r.ok && a.eingabe === 'strahl') body = `${bildHTML(a, { loesung: true })}<p class="answer-line">Richtig ist: <b class="loesung">${esc(loesungText(a))}</b></p>`;
+  else if (!r.ok && a.eingabe === 'strahl') body = `${bildHTML(a, { loesung: true })}<p class="answer-line">Richtig ist: <b class="loesung">${zl(esc(loesungText(a)))}</b></p>`;
   else if (!r.ok) body = loesungHTML(a, r.wert);
   if (r.ok) {
     cls = 'good';
     band = info.revanche ? 'Revanche gewonnen!' : info.ch && info.ch.to >= MODELL.sicherAb && info.ch.from < MODELL.sicherAb ? 'Sicher gelandet!' : 'Sitzt!';
     if (c.art === 'papier' && SES.auf && S.papier[c.blatt].erg[c.nr].v > 1) band = 'Gefunden!';
     // Die gelöste Aufgabe noch einmal ganz (Zahlen in Dreiergruppen): „8 200 → Vorgänger: 8 199 · Nachfolger: 8 201“
-    if (!Array.isArray(a)) body += `<p class="answer-line">${a.term ? `${umbruch(esc(a.term))} → ` : ''}<b class="loesung">${esc(loesungText(a))}</b></p>`;
+    if (!Array.isArray(a)) body += `<p class="answer-line">${a.term ? `${zl(umbruch(esc(a.term)))} → ` : ''}<b class="loesung">${zl(esc(loesungText(a)))}</b></p>`;
   } else {
     cls = 'sogehts';
     const satz = !Array.isArray(a) && probeSatz(a);
@@ -2250,7 +2366,7 @@ function renderFeedback(r, info) {
   if (info.ls === 'morgen') notizen.push(`<p class="note">${addDays(today(), 1) === pruefTag() ? 'Morgen kommt das in der Generalprobe noch einmal.' : 'Morgen machen wir das mit Hilfe weiter.'}</p>`);
   E.card.className = 'vcard';
   const nochmalHTML = !info.nochmal ? ''
-    : Array.isArray(a) || a.eingabe === 'ordnen' || a.eingabe === 'strahl' ? '' : aufgabeHTML(a) + '<div class="anz-zeile"><output class="anz" id="anz"></output></div>';
+    : Array.isArray(a) || a.eingabe === 'ordnen' || a.eingabe === 'strahl' ? '' : aufgabeHTML(a) + eingabeZeileHTML(a);
   E.card.innerHTML = `<div class="band ${cls}">${esc(band)}</div><div class="cbody">${nochmalHTML}${titel}${body}${notizen.join('')}</div>`;
   if (info.nochmal && (Array.isArray(a) || a.eingabe === 'ordnen' || a.eingabe === 'strahl')) {
     // zweiter Versuch bei Vergleich, Ordnen, Zahlenstrahl: die Aufgabe noch einmal ganz zeigen
@@ -2365,11 +2481,11 @@ function richtigHTML(a) {
     const zeilen = a.felder.map((f, i) => {
       let t;
       try { t = MATHE.anzeigen({ ...a, eingabe: f.art || 'zahl', felder: undefined, loesung: a.loesung[i] }); } catch (e) { t = String(a.loesung[i]); }
-      return `<li>${f.label ? `<small>${esc(f.label)}</small>` : ''}<b class="loesung">${esc(t)}</b></li>`;
+      return `<li>${f.label ? `<small>${esc(f.label)}</small>` : ''}<b class="loesung">${zl(esc(t))}</b></li>`;
     }).join('');
     return `<p class="answer-line">Richtig ist:</p><ul class="kann richtig">${zeilen}</ul>`;
   }
-  return `<p class="answer-line">Richtig ist: <b class="loesung">${esc(loesungText(a))}</b></p>`;
+  return `<p class="answer-line">Richtig ist: <b class="loesung">${zl(esc(loesungText(a)))}</b></p>`;
 }
 // Der Probe-Satz passt nur zu Rechnungen (Ergebnis rückwärts nachrechnen), nicht zu Kürzeln, Ordnen oder Ablesen
 function probeSatz(a) {
@@ -2390,8 +2506,8 @@ function probeErgebnisse(neu = {}) {
   const offen = probe.aufgaben.filter(a => !st.erg[a.nr]).length;
   const richtig = probe.aufgaben.length - fehler.length - offen;
   const fehlerHTML = fehler.map(a => `<div class="pfehler">
-      <p class="answer-line"><b>Aufgabe ${esc(a.nr)}</b>${a.term || a.kurz ? ` · ${umbruch(esc(a.term || a.kurz))}` : ''}</p>
-      ${a.text && !a.term ? `<p class="fineprint">${umbruch(esc(a.text))}</p>` : ''}
+      <p class="answer-line"><b>Aufgabe ${esc(a.nr)}</b>${a.term || a.kurz ? ` · ${zl(umbruch(esc(a.term || a.kurz)))}` : ''}</p>
+      ${a.text && !a.term ? `<p class="fineprint">${zl(umbruch(esc(a.text)))}</p>` : ''}
       ${richtigHTML(a)}
       ${wegHTML(a.weg)}
       ${probeSatz(a) ? `<p class="fineprint">${probeSatz(a)}</p>` : ''}
@@ -2721,9 +2837,11 @@ window.ML = {
       mission: p.phase === 'testtag' ? 'Testtag (keine Mission)' : `${m.rundeOffen ? '○' : '✓'} Runde${m.papier ? ` · ${m.papier.offen ? '○' : '✓'} ${m.papier.art}` : ''}${m.fertig ? ' · geschafft' : ''}`,
       einstufung: p.einstufung, lernschritte: p.lernschritte, wdh: p.wdh, extra: p.extra || [], aufwaermen: p.aufwaermen, min: Math.round(p.sek / 6) / 10,
       papier: m.papier, papierTypen: papierTypenHeute(), ziel: z.prozent, sicher: z.sicherN, ueber: z.ueberN, bereit: z.bereit, fast: z.fast,
-      lsQuote: S.day.lsQuote, schonMin: Math.round(heuteSek() / 6) / 10, nurPapier: NUR_PAPIER.slice()
+      lsQuote: S.day.lsQuote, lsIds: S.day.lsIds, faktor: eichFaktor(), schonMin: Math.round(heuteSek() / 6) / 10, nurPapier: NUR_PAPIER.slice()
     };
   },
+  // Eichung (ml-v3): Faktor echte gegen geschätzte Sekunden der App-Aufgaben, je Tag (ML.eichung().tage)
+  eichung: () => eichung(),
   ziel: () => zielStand(),
   // HTML einer Aufgabe (Text, Bild, term) wie in der Karte – zum Prüfen von Umbruch und Breite: ML.karte(ML.gen('sw-zahlwort', 3))
   karte: a => aufgabeHTML(a),

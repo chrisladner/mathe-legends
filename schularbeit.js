@@ -393,7 +393,7 @@ window.SCHULARBEIT = {
         tasten: [],
         loesung: [307000, 48000],
         weg: [
-          'Mal 100: zwei Nullen anhängen. Mal 1 000: drei Nullen anhängen.',
+          'Mal 100: zwei Nullen anhängen. Mal 1 000: drei Nullen anhängen.',
           '3 070 · 100 = 307 000',
           '48 · 1 000 = 48 000'
         ],
